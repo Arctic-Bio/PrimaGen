@@ -1,0 +1,43 @@
+def generate_small_primes(limit):
+    """Generates a list of small primes up to a given limit using the Sieve of Eratosthenes."""
+    sieve = [True] * (limit + 1)
+    sieve[0] = sieve[1] = False
+    for i in range(2, int(limit ** 0.5) + 1):
+        if sieve[i]:
+            for j in range(i * i, limit + 1, i):
+                sieve[j] = False
+    return [num for num, is_prime in enumerate(sieve) if is_prime]
+
+
+def fractional_gap_prediction(limit):
+    """Predicts prime numbers up to a limit by checking modular gaps based on fractional patterns."""
+    small_primes = generate_small_primes(int(limit ** 0.5))  # Start with small primes
+    primes = []
+
+    for num in range(2, limit + 1):
+        is_prime = True
+
+        # Check for divisibility with each small prime
+        for prime in small_primes:
+            if num % prime == 0:
+                is_prime = False
+                break
+
+        # Skip numbers that fit fractional gap patterns (approximate non-prime gaps)
+        # Skip numbers near multiples of repeating decimal gaps, e.g., 3 (1/3), 5 (1/5), 7 (1/7)
+        fractional_skip_gaps = [3, 5, 7]
+        for gap in fractional_skip_gaps:
+            if (num % gap) == 0:
+                is_prime = False
+                break
+
+        if is_prime:
+            primes.append(num)
+
+    return primes
+
+
+# Example usage
+limit = 100
+predicted_primes = fractional_gap_prediction(limit)
+print("Predicted primes up to", limit, ":", predicted_primes)
