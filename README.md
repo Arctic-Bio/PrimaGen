@@ -1,2 +1,2 @@
 # PrimaGen
-PriemGeneration
+Primagen
