@@ -1,0 +1,85 @@
+import sympy
+import math
+import random
+import sys
+
+# Increase the limit for integer string conversion (important for large numbers)
+sys.set_int_max_str_digits(100000)
+
+
+# Function to estimate the gap between primes based on observed prime gaps
+def estimate_prime_gap(last_prime):
+    """Estimate the gap between the current prime and the next prime."""
+    log_gap = math.log(last_prime)  # Logarithmic approximation of prime gap
+    estimated_gap = int(log_gap * 1.5)  # Multiply by a factor to account for increasing gaps
+    return estimated_gap
+
+
+# Fast Miller-Rabin Primality Test for large numbers
+def miller_rabin_primality_test(n, k=5):
+    """Perform a Miller-Rabin primality test on a number n with k iterations."""
+    if n <= 1:
+        return False
+    if n == 2 or n == 3:
+        return True
+    if n % 2 == 0:
+        return False
+
+    # Write n - 1 as d * 2^r
+    r, d = 0, n - 1
+    while d % 2 == 0:
+        r += 1
+        d //= 2
+
+    # Test k times
+    for _ in range(k):
+        a = random.randrange(2, n - 1)
+        x = pow(a, d, n)  # Compute a^d % n
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+
+# Function to find the next prime after the current largest known prime
+def find_next_prime_after_large_prime(last_prime):
+    """Find the next prime after the last known prime using an estimated gap."""
+    # Estimate the gap to the next prime
+    estimated_gap = estimate_prime_gap(last_prime)
+
+    # Print estimation details for progress tracking
+    print(f"Estimating gap: {estimated_gap} based on the last prime.")
+
+    # Start searching from the next candidate after the last prime
+    candidate = last_prime + estimated_gap
+    candidate_count = 0  # To count how many candidates we check
+
+    # Begin checking candidates
+    while True:
+        candidate_count += 1
+
+        # Print every 100th candidate for progress tracking
+        if candidate_count % 100 == 0:
+            print(f"Checking candidate: {candidate} (Candidate # {candidate_count})")
+
+        # Use Miller-Rabin test for quick primality check
+        if miller_rabin_primality_test(candidate):
+            print(f"Found prime: {candidate} after checking {candidate_count} candidates.")
+            return candidate
+
+        # If not prime, move to the next candidate
+        candidate += 1
+
+
+# Example usage:
+# Replace with the current largest known prime (this is an example, update with actual value)
+current_largest_prime = 136279841 # Example largest known prime
+
+# Find the next prime
+next_prime = find_next_prime_after_large_prime(current_largest_prime)
+print(f"The next prime after the largest known prime is {next_prime}.")
