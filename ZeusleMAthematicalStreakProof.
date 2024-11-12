@@ -1,0 +1,38 @@
+import sympy
+from colorama import Fore, Style, init
+
+init(autoreset=True)  # Initialize colorama
+
+def is_prime(n):
+    """Check if a number is prime."""
+    return sympy.isprime(n)
+
+def reverse_binary(n):
+    """Convert a number to binary, reverse the binary string, and convert back to decimal."""
+    binary_str = bin(n)[2:]  # Convert to binary and remove the '0b' prefix
+    reversed_binary_str = binary_str[::-1]  # Reverse the binary string
+    return int(reversed_binary_str, 2)  # Convert reversed binary back to decimal
+
+def test_theory(limit=1000):
+    """Test the theory on all prime numbers up to the specified limit."""
+    results = []
+    for prime in sympy.primerange(2, limit):
+        reversed_decimal = reverse_binary(prime)
+
+        if is_prime(reversed_decimal):
+            results.append((prime, reversed_decimal, True))
+        else:
+            results.append((prime, reversed_decimal, False))
+
+    return results
+
+# Run the test
+limit = 10000  # You can increase the limit if desired
+results = test_theory(limit)
+
+# Print results
+print("Prime | Reversed Binary (Decimal) | Is Prime?")
+for prime, reversed_decimal, is_correct in results:
+    color = Fore.GREEN if is_correct else Fore.RED
+    match_text = "Yes" if is_correct else "No"
+    print(f"{prime} -> {reversed_decimal} -> {color}{match_text}{Style.RESET_ALL}")
