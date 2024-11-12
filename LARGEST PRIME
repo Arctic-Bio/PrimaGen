@@ -1,0 +1,1 @@
+I just discoverd that if you take the binary code of a prime such as the binary of 1013 and then reverse the binary order you get a larger prime ALWAYS. Meaning that to find tehg next largest priem without having to calculate the full thing simply convert it to buinary and reverse its order.
