@@ -1,0 +1,45 @@
+from sympy import primerange
+
+
+def analyze_prime_differences(max_prime=1000):
+    # Generate all primes up to the specified limit
+    primes = list(primerange(2, max_prime))
+    differences = []
+    normalized_by_position = []
+    normalized_by_position_distance = []
+
+    print("Prime analysis up to:", max_prime)
+    print("Prime | Difference | Div by Position | Div by Position Distance")
+
+    # Loop through primes and calculate the metrics
+    for i in range(1, len(primes)):
+        current_prime = primes[i]
+        previous_prime = primes[i - 1]
+        position = i + 1  # Position in list (1-indexed)
+
+        # Difference between current and previous prime
+        diff = current_prime - previous_prime
+        differences.append(diff)
+
+        # Normalized by position
+        norm_by_position = diff / position
+        normalized_by_position.append(norm_by_position)
+
+        # Normalized by positional distance from previous prime
+        position_distance = position - (i)  # This is always 1 in our loop, but shown for generality
+        norm_by_position_distance = diff / position_distance
+        normalized_by_position_distance.append(norm_by_position_distance)
+
+        # Display results
+        print(f"{current_prime:<5} | {diff:<10} | {norm_by_position:<15.2f} | {norm_by_position_distance:<10.2f}")
+
+    # Summary of metrics
+    print("\nSummary:")
+    print(f"Total primes analyzed: {len(primes)}")
+    print(f"Differences between consecutive primes: {differences}")
+    print(f"Differences normalized by position: {normalized_by_position}")
+    print(f"Differences normalized by positional distance: {normalized_by_position_distance}")
+
+
+# Example usage
+analyze_prime_differences(max_prime=1000)
