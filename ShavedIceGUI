@@ -1,0 +1,115 @@
+#Created by BMK/ArcticBio
+import tkinter as tk
+from tkinter import ttk, messagebox
+import ttkbootstrap as tb
+import random
+import time
+
+
+def is_prime(n, k=10):
+    """Miller-Rabin primality test to check if a number n is prime."""
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+
+    r, s = 0, n - 1
+    while s % 2 == 0:
+        r += 1
+        s //= 2
+
+    for _ in range(k):
+        a = random.randint(2, n - 2)
+        x = pow(a, s, n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+
+def shave_factors(n):
+    """Reduces factors by modifying digits in each segment of the number."""
+    n_str = str(n)
+    new_n = ""
+    for digit in n_str:
+        if int(digit) % 2 == 0:
+            new_n += str(int(digit) - 1)
+        else:
+            new_n += digit
+    candidate = int(new_n)
+    for p in [3, 5, 7]:
+        if candidate % p == 0:
+            candidate += 1
+    return candidate
+
+
+def generate_prime(starting_number, perform_final_check=True):
+    candidate = shave_factors(starting_number)
+    start_time = time.time()
+    attempts = 0
+    while perform_final_check and not is_prime(candidate):
+        candidate += 2
+        attempts += 1
+    elapsed_time = time.time() - start_time
+    return candidate, elapsed_time, attempts
+
+
+def start_prime_generation():
+    try:
+        starting_number = int(entry_start.get())
+        perform_final_check = var_check.get()
+
+        prime, elapsed_time, attempts = generate_prime(starting_number, perform_final_check)
+
+        label_result.config(text=f"Prime candidate generated: {prime}")
+        label_time.config(text=f"Time taken: {elapsed_time:.2f} seconds")
+        label_attempts.config(text=f"Total attempts: {attempts}")
+
+    except ValueError:
+        messagebox.showerror("Input Error", "Please enter a valid integer as the starting number.")
+
+
+# Setup the Tkinter GUI with ttkbootstrap theme
+app = tb.Window(themename="darkly")
+app.title("Prime Generator Tool")
+app.geometry("500x400")
+
+# Title
+title_label = ttk.Label(app, text="Prime Generator Tool", font=("Helvetica", 18, "bold"))
+title_label.pack(pady=10)
+
+# Entry for Starting Number
+frame_start = ttk.Frame(app)
+frame_start.pack(pady=10)
+ttk.Label(frame_start, text="Enter starting number:").grid(row=0, column=0, padx=5)
+entry_start = ttk.Entry(frame_start, width=20)
+entry_start.grid(row=0, column=1, padx=5)
+
+# Checkbox for Final Prime Check
+var_check = tk.BooleanVar(value=True)
+checkbox_check = ttk.Checkbutton(app, text="Perform Final Prime Check", variable=var_check)
+checkbox_check.pack()
+
+# Start Button
+button_start = ttk.Button(app, text="Generate Prime", command=start_prime_generation)
+button_start.pack(pady=10)
+
+# Output Frame for Results
+frame_output = ttk.Frame(app)
+frame_output.pack(pady=10)
+label_result = ttk.Label(frame_output, text="Prime candidate generated: ", font=("Helvetica", 12))
+label_result.grid(row=0, column=0, sticky="w", padx=5)
+label_time = ttk.Label(frame_output, text="Time taken: ", font=("Helvetica", 12))
+label_time.grid(row=1, column=0, sticky="w", padx=5)
+label_attempts = ttk.Label(frame_output, text="Total attempts: ", font=("Helvetica", 12))
+label_attempts.grid(row=2, column=0, sticky="w", padx=5)
+
+# Main Loop
+app.mainloop()
