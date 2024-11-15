@@ -1,0 +1,46 @@
+#shAVED iCE CREATED BY bmk/ARCTICBIO
+
+import sympy
+
+
+def is_prime(n):
+    """Uses sympy's Miller-Rabin-based isprime check."""
+    return sympy.isprime(n)
+
+
+def shave_and_reconstruct(number, min_prime_size=3):
+    """Attempts to shave down factors and reconstruct a larger prime."""
+    original = number
+    factors = [2, 3, 5, 7, 11, 13, 17, 19, 23]  # Start with small prime factors
+
+    # Step 1: Remove factors iteratively
+    for factor in factors:
+        while number % factor == 0:
+            number //= factor  # Shave off the factor
+            if is_prime(number) and len(str(number)) >= min_prime_size:
+                return number
+
+    # Step 2: Chunk-based shaving and reassembly
+    num_str = str(original)
+    length = len(num_str)
+
+    for chunk_size in range(2, length):  # Try chunking with different sizes
+        for i in range(0, length, chunk_size):
+            chunk = int(num_str[i:i + chunk_size])
+            if is_prime(chunk) and len(str(chunk)) >= min_prime_size:
+                return chunk
+
+    # Step 3: Attempt reassembly with incremental prime adjustments
+    candidate = original
+    while not is_prime(candidate):
+        candidate += 2  # Try to increment by 2 (ensuring candidate remains odd)
+        if is_prime(candidate):
+            return candidate
+
+    return candidate  # Final fallback to the adjusted candidate if prime
+
+
+# Example usage
+number = 999999
+prime_candidate = shave_and_reconstruct(number)
+print("Prime candidate generated from", number, "is", prime_candidate)
