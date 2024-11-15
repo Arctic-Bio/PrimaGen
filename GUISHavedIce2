@@ -1,0 +1,128 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import ttkbootstrap as tb
+import random
+import time
+
+def is_prime(n, k=10):
+    """Miller-Rabin primality test to check if a number n is prime."""
+    if n <= 1:
+        return False
+    if n <= 3:
+        return True
+    if n % 2 == 0 or n % 3 == 0:
+        return False
+
+    r, s = 0, n - 1
+    while s % 2 == 0:
+        r += 1
+        s //= 2
+
+    for _ in range(k):
+        a = random.randint(2, n - 2)
+        x = pow(a, s, n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+def shave_factors(n):
+    """Reduces factors by modifying digits in each segment of the number."""
+    n_str = str(n)
+    new_n = ""
+    for digit in n_str:
+        if int(digit) % 2 == 0:
+            new_n += str(int(digit) - 1)
+        else:
+            new_n += digit
+    candidate = int(new_n)
+    for p in [3, 5, 7]:
+        if candidate % p == 0:
+            candidate += 1
+    return candidate
+
+def generate_prime(digits, perform_final_check=True):
+    starting_number = int("9" * digits)  # Create a starting number with the specified number of 9's
+    candidate = shave_factors(starting_number)
+    
+    # Ensure the number is odd
+    if candidate % 2 == 0:
+        candidate += 1  # Make sure it's odd to save time and resources
+    
+    start_time = time.time()
+    attempts = 0
+    while perform_final_check and not is_prime(candidate):
+        candidate += 2  # Only check odd numbers
+        attempts += 1
+    elapsed_time = time.time() - start_time
+    return candidate, elapsed_time, attempts
+
+def start_prime_generation():
+    try:
+        digits = int(entry_digits.get())
+        if digits <= 0:
+            raise ValueError("Number of digits must be positive.")
+        
+        perform_final_check = var_check.get()
+        
+        prime, elapsed_time, attempts = generate_prime(digits, perform_final_check)
+        
+        label_result.config(text=f"Prime candidate generated: {prime}")
+        label_result.bind("<Button-1>", lambda e: copy_to_clipboard(prime))  # Make the label clickable
+        label_result.config(foreground="cyan")  # Style for the clickable label
+        label_time.config(text=f"Time taken: {elapsed_time:.2f} seconds")
+        label_attempts.config(text=f"Total attempts: {attempts}")
+        
+    except ValueError:
+        messagebox.showerror("Input Error", "Please enter a valid positive integer for the number of digits.")
+
+def copy_to_clipboard(prime):
+    """Copy the prime number to the clipboard."""
+    app.clipboard_clear()
+    app.clipboard_append(prime)
+    messagebox.showinfo("Copied", f"Prime number {prime} copied to clipboard.")
+
+# Setup the Tkinter GUI with ttkbootstrap theme
+app = tb.Window(themename="darkly")
+app.title("Prime Generator Tool")
+app.geometry("500x400")
+
+# Title
+title_label = ttk.Label(app, text="Prime Generator Tool", font=("Helvetica", 18, "bold"))
+title_label.pack(pady=10)
+
+# Entry for Number of Digits
+frame_digits = ttk.Frame(app)
+frame_digits.pack(pady=10)
+ttk.Label(frame_digits, text="Enter number of digits for the prime:").grid(row=0, column=0, padx=5)
+entry_digits = ttk.Entry(frame_digits, width=10)
+entry_digits.grid(row=0, column=1, padx=5)
+
+# Checkbox for Final Prime Check
+var_check = tk.BooleanVar(value=True)
+checkbox_check = ttk.Checkbutton(app, text="Perform Final Prime Check", variable=var_check)
+checkbox_check.pack()
+
+# Start Button
+button_start = ttk.Button(app, text="Generate Prime", command=start_prime_generation)
+button_start.pack(pady=10)
+
+# Output Frame for Results
+frame_output = ttk.Frame(app)
+frame_output.pack(pady=10)
+label_result = ttk.Label(frame_output, text="Prime candidate generated: ", font=("Helvetica", 12))
+label_result.grid(row=0, column=0, sticky="w", padx=5)
+label_time = ttk.Label(frame_output, text="Time taken: ", font=("Helvetica", 12))
+label_time.grid(row=1, column=0, sticky="w", padx=5)
+label_attempts = ttk.Label(frame_output, text="Total attempts: ", font=("Helvetica", 12))
+label_attempts.grid(row=2, column=0, sticky="w", padx=5)
+
+# Main Loop
+app.mainloop()
+
+#SHAVED ICE 2 ArcticBio/BMK
