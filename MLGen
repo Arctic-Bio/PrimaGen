@@ -1,0 +1,131 @@
+import pandas as pd
+import numpy as np
+from sympy import isprime, nextprime, divisors
+from math import isqrt  # This is for integer square root calculation
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+
+# Function to check if a number is a palindrome
+def is_palindrome(n):
+    return str(n) == str(n)[::-1]
+
+
+# Function to check if a number is a Fibonacci number
+def is_fibonacci(n):
+    return is_perfect_square(5 * n ** 2 + 4) or is_perfect_square(5 * n ** 2 - 4)
+
+
+# Function to check if a number is a perfect square using integer square root
+def is_perfect_square(n):
+    root = isqrt(n)  # Calculate the integer square root
+    return root * root == n
+
+
+# Function to compute the sum of digits of a number
+def sum_of_digits(n):
+    return sum(int(digit) for digit in str(n))
+
+
+# Function to compute the product of digits of a number
+def product_of_digits(n):
+    product = 1
+    for digit in str(n):
+        product *= int(digit)
+    return product
+
+
+# Function to get the divisors (factors) of a number using sympy
+def get_factors(n):
+    return divisors(n)  # Using sympy's divisors function for large numbers
+
+
+# Function to find the modular inverses for small primes
+def modular_inverses(n):
+    inverses = {}
+    for prime in [2, 3, 5, 7, 11]:
+        if n % prime != 0:  # Check that the number is not divisible by the prime
+            inverse = pow(n, -1, prime)  # Compute the modular inverse
+            inverses[prime] = inverse
+    return inverses
+
+
+# Function to generate a large prime number with a specific number of digits
+def generate_large_prime(num_digits=1000):
+    prime_candidate = 10 ** (num_digits - 1)  # Start from a number with the desired number of digits
+    return nextprime(prime_candidate)  # Get the next prime
+
+
+# Function to generate features for numbers up to a certain limit
+def generate_large_prime_features(limit=500):
+    data = []
+    for n in range(1, limit + 1):
+        features = {
+            'number': str(n),  # Store the number as a string to avoid overflow issues
+            'is_prime': isprime(n),
+            'sum_digits': sum_of_digits(n),
+            'product_digits': product_of_digits(n),
+            'num_divisors': len(get_factors(n)),
+            'digit_count': len(str(n)),
+            'palindrome': is_palindrome(n),
+            'fibonacci': is_fibonacci(n),
+        }
+
+        # Modular inverses for small primes
+        inverses = modular_inverses(n)
+        for p in inverses:
+            features[f'mod_inverse_{p}'] = inverses[p]
+
+        data.append(features)
+
+    return pd.DataFrame(data)
+
+
+# Function to extract features for a very large number (e.g., 1000-digit primes)
+def extract_large_prime_features(n):
+    features = {
+        'number': str(n),  # Store the number as a string
+        'sum_digits': sum_of_digits(n),
+        'product_digits': product_of_digits(n),
+        'num_divisors': len(get_factors(n)),  # Use sympy's divisors function for large numbers
+        'digit_count': len(str(n)),
+        'palindrome': is_palindrome(n),
+        'fibonacci': is_fibonacci(n),
+    }
+
+    # Example: only use modular inverses for small primes as features for now
+    inverses = modular_inverses(n)
+    for p in inverses:
+        features[f'mod_inverse_{p}'] = inverses[p]
+
+    return features
+
+
+# Generate features for smaller numbers (training data)
+df = generate_large_prime_features(500)  # Use smaller primes for training
+
+# Prepare data for model training
+X = df.drop(columns=['number', 'is_prime'])
+y = df['is_prime']
+
+# Train a RandomForestClassifier on smaller primes
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+clf = RandomForestClassifier(n_estimators=100, random_state=42)
+clf.fit(X_train, y_train)
+
+# Test the classifier on a large prime (1000-digit number)
+large_prime = generate_large_prime(num_digits=1000)
+
+# Extract features for this large prime
+large_prime_features = extract_large_prime_features(large_prime)
+
+# Convert features into DataFrame for prediction
+large_prime_df = pd.DataFrame([large_prime_features])
+
+# Drop the 'number' column before prediction (it should not be used as a feature)
+large_prime_df = large_prime_df.drop(columns=['number'])
+
+# Make a prediction
+prediction = clf.predict(large_prime_df)
+print(f"The model predicts that the number {large_prime} is {'prime' if prediction[0] else 'not prime'}.")
