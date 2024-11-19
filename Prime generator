@@ -1,0 +1,46 @@
+def generate_theoretical_prime_candidate(length, prime_mod_bases):
+    """
+    Generate a number adhering to advanced theoretical rules for primality.
+    """
+    while True:
+        # Generate a random odd number with valid first and last digits
+        first_digit = random.choice([1, 2, 3, 5, 7])  # Common first digits for primes
+        last_digit = random.choice([1, 3, 7, 9])  # Avoid even digits and 5 for primality
+        middle_digits = "".join(str(random.randint(0, 9)) for _ in range(length - 2))
+        candidate = int(f"{first_digit}{middle_digits}{last_digit}")
+
+        # Avoid digit sum divisible by 3
+        if sum(map(int, str(candidate))) % 3 == 0:
+            continue
+
+        # Modular residue checks
+        if any(candidate % p == 0 for p in prime_mod_bases):
+            continue
+
+        # Cross-digit alternating sum rule (avoid divisibility by small primes)
+        alternating_sum = sum(int(d) if i % 2 == 0 else -int(d) for i, d in enumerate(str(candidate)))
+        if any(alternating_sum % p == 0 for p in [2, 3, 5, 7]):
+            continue
+
+        # Avoid overly repetitive digits
+        digits = str(candidate)
+        if len(set(digits)) < len(digits) // 2:
+            continue
+
+        return candidate
+
+def generate_theoretical_primes(count, length):
+    """
+    Generate a list of primes using advanced theoretical rules and structures.
+    """
+    prime_mod_bases = [7, 11, 13, 17, 19, 23]  # Modular residues for efficiency
+    primes = []
+    while len(primes) < count:
+        candidate = generate_theoretical_prime_candidate(length, prime_mod_bases)
+        if miller_rabin_test(candidate):  # Check primality of the candidate
+            primes.append(candidate)
+    return primes
+
+# Generate 5 primes of 10 digits using the enhanced theoretical approach
+theoretical_primes = generate_theoretical_primes(count=5, length=10)
+theoretical_primes
