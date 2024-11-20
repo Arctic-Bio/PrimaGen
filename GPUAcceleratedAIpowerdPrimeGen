@@ -1,0 +1,156 @@
+import pandas as pd
+import numpy as np
+from sympy import isprime, nextprime, divisors
+from math import isqrt
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from tqdm import tqdm
+from colorama import Fore, Style, init
+import time
+import cupy as cp  # For GPU acceleration
+
+# Initialize colorama
+init(autoreset=True)
+
+# Function to check if a number is a palindrome
+def is_palindrome(n):
+    return str(n) == str(n)[::-1]
+
+# Function to check if a number is a Fibonacci number
+def is_fibonacci(n):
+    return is_perfect_square(5 * n ** 2 + 4) or is_perfect_square(5 * n ** 2 - 4)
+
+# Function to check if a number is a perfect square using integer square root
+def is_perfect_square(n):
+    root = isqrt(n)  # Calculate the integer square root
+    return root * root == n
+
+# Function to compute the sum of digits of a number
+def sum_of_digits(n):
+    return sum(int(digit) for digit in str(n))
+
+# Function to compute the product of digits of a number
+def product_of_digits(n):
+    product = 1
+    for digit in str(n):
+        product *= int(digit)
+    return product
+
+# Function to get the divisors (factors) of a number using sympy
+def get_factors(n):
+    return divisors(n)  # Using sympy's divisors function for large numbers
+
+# Function to find the modular inverses for small primes
+def modular_inverses(n):
+    inverses = {}
+    for prime in [2, 3, 5, 7, 11]:
+        if n % prime != 0:  # Check that the number is not divisible by the prime
+            inverse = pow(n, -1, prime)  # Compute the modular inverse
+            inverses[prime] = inverse
+    return inverses
+
+# Function to check if a number is a Mersenne prime (i.e., of the form 2^n - 1 where n is prime)
+def is_mersenne_prime(n):
+    if n < 2:
+        return False
+    mersenne_number = 2**n - 1
+    return isprime(mersenne_number)
+
+# Function to generate features for numbers up to a certain limit (training with exponents)
+def generate_exponent_features(limit=500):
+    data = []
+    print(Fore.YELLOW + f"Generating features for exponents up to {limit}...")
+
+    # Using tqdm to show progress and update on each 10th exponent
+    for n in tqdm(range(1, limit + 1), desc="Generating features", unit="exponent"):
+        features = {
+            'exponent': n,  # Using the exponent itself as a feature
+            'is_prime': isprime(n),
+            'sum_digits': sum_of_digits(n),
+            'product_digits': product_of_digits(n),
+            'num_divisors': len(get_factors(n)),
+            'digit_count': len(str(n)),
+            'palindrome': is_palindrome(n),
+            'fibonacci': is_fibonacci(n),
+            'is_mersenne_prime': is_mersenne_prime(n),
+        }
+
+        # Modular inverses for small primes
+        inverses = modular_inverses(n)
+        for p in inverses:
+            features[f'mod_inverse_{p}'] = inverses[p]
+
+        data.append(features)
+
+        # Print update every 50 numbers to avoid overload
+        if n % 50 == 0:
+            print(Fore.CYAN + f"Features generated for exponent {n}/{limit}...")
+
+    return pd.DataFrame(data)
+
+# Function to extract features for a very large exponent (e.g., 1000)
+def extract_exponent_features(n):
+    features = {
+        'exponent': n,  # Using the exponent itself as a feature
+        'sum_digits': sum_of_digits(n),
+        'product_digits': product_of_digits(n),
+        'num_divisors': len(get_factors(n)),
+        'digit_count': len(str(n)),
+        'palindrome': is_palindrome(n),
+        'fibonacci': is_fibonacci(n),
+        'is_mersenne_prime': is_mersenne_prime(n),
+    }
+
+    # Example: only use modular inverses for small primes as features for now
+    inverses = modular_inverses(n)
+    for p in [2, 3, 5, 7, 11]:  # Include these small primes in feature extraction
+        features[f'mod_inverse_{p}'] = inverses.get(p, None)  # Use None if no inverse exists
+
+    return features
+
+# Generate features for smaller exponents (training data)
+print(Fore.CYAN + "Preparing training data...")
+df = generate_exponent_features(500)  # Use smaller exponents for training
+
+# Prepare data for model training
+X = df.drop(columns=['is_prime', 'exponent'])
+y = df['is_prime']
+
+# Train a RandomForestClassifier on exponents
+print(Fore.GREEN + "Training the model...")
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+clf = RandomForestClassifier(n_estimators=100, random_state=42)
+clf.fit(X_train, y_train)
+
+# Test the classifier on a large exponent (e.g., for Mersenne prime)
+large_exponent = 136279841  # Example large exponent, use any prime exponent you like
+
+# Extract features for this large exponent
+print(Fore.CYAN + "Extracting features for a large exponent...")
+start_time = time.time()
+large_exponent_features = extract_exponent_features(large_exponent)
+end_time = time.time()
+
+# Log the time it took for feature extraction
+print(Fore.YELLOW + f"Feature extraction for large exponent {large_exponent} took {end_time - start_time:.2f} seconds.")
+
+# Convert features into DataFrame for prediction
+large_exponent_df = pd.DataFrame([large_exponent_features])
+
+# Drop the 'exponent' column before prediction (it should not be used as a feature)
+large_exponent_df = large_exponent_df.drop(columns=['exponent'])
+
+# Make a prediction
+print(Fore.MAGENTA + f"Predicting whether 2^{large_exponent} - 1 is prime...")
+prediction = clf.predict(large_exponent_df)
+
+# Print the prediction with color
+if prediction[0]:
+    print(Fore.GREEN + f"The model predicts that 2^{large_exponent} - 1 is prime.")
+else:
+    print(Fore.RED + f"The model predicts that 2^{large_exponent} - 1 is not prime.")
+
+# Finding the next prime number after the given exponent
+next_prime_exponent = nextprime(large_exponent)
+print(Fore.CYAN + f"The next prime exponent is {next_prime_exponent}.")
