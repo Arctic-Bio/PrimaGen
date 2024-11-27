@@ -1,0 +1,50 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from sklearn.cluster import DBSCAN
+from sympy import primerange
+from sklearn.preprocessing import StandardScaler
+
+#This proves my theory of different species of primes intertwined in the same area creating chaos given a limited sample size. This should also allow me to continue certain streaks and achieve novel primes on those streaks.
+
+# Step 1: Generate a list of the first 10,000 primes
+primes = list(primerange(2, 105000))[:10000]  # Generate primes up to a large enough limit
+
+# Step 2: Convert each prime into a vector of digits
+def prime_to_digit_vector(prime):
+    """Convert a prime number to a vector of its digits."""
+    return [int(digit) for digit in str(prime)]
+
+# Convert all primes to digit vectors
+digit_vectors = [prime_to_digit_vector(prime) for prime in primes]
+
+# Step 3: Standardize the data (important for PCA)
+max_digits = max(len(str(prime)) for prime in primes)
+tensor = np.zeros((len(primes), max_digits))
+
+# Fill tensor with digits of primes
+for i, prime in enumerate(primes):
+    digits = prime_to_digit_vector(prime)
+    tensor[i, :len(digits)] = digits  # Fill tensor with prime digits
+
+# Standardize the tensor (important before PCA)
+scaler = StandardScaler()
+tensor_standardized = scaler.fit_transform(tensor)
+
+# Step 4: Apply PCA
+pca = PCA(n_components=2)
+pca_components = pca.fit_transform(tensor_standardized)
+
+# Step 5: Apply DBSCAN for island detection (density-based clustering)
+dbscan = DBSCAN(eps=0.5, min_samples=10)  # Adjust eps and min_samples based on clustering needs
+labels = dbscan.fit_predict(pca_components)
+
+# Step 6: Plot the PCA results with clustering
+plt.figure(figsize=(10, 8))
+plt.scatter(pca_components[:, 0], pca_components[:, 1], c=labels, cmap='Spectral', marker='o', s=10, alpha=0.6)
+plt.title('PCA of First 10,000 Primes with Island Detection (DBSCAN)')
+plt.xlabel('PCA Component 1')
+plt.ylabel('PCA Component 2')
+plt.colorbar(label="Cluster ID")
+plt.grid(True)
+plt.show()
