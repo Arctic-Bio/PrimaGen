@@ -1,0 +1,57 @@
+import sympy
+import matplotlib.pyplot as plt
+
+
+def generate_primes(count, min_digits=2):
+    """Generate a list of multi-digit prime numbers."""
+    primes = []
+    num = 10 ** (min_digits - 1)  # Start from the smallest multi-digit number
+    while len(primes) < count:
+        num = sympy.nextprime(num)
+        primes.append(num)
+    return primes
+
+
+def process_prime(prime):
+    """Process a prime number: split into digits, calculate differences, and divide by the original number."""
+    digits = [int(d) for d in str(prime)]
+    differences = [digits[i + 1] - digits[i] for i in range(len(digits) - 1)]
+    differences_by_original = [diff / prime for diff in differences]
+    return differences_by_original
+
+
+def main():
+    primes = generate_primes(1000)  # Generate 100 primes
+    results = {}
+
+    for prime in primes:
+        results[prime] = process_prime(prime)
+
+    # Flatten results for plotting
+    all_primes = []
+    all_differences = []
+
+    for prime, diff_ratios in results.items():
+        all_primes.extend([prime] * len(diff_ratios))
+        all_differences.extend(diff_ratios)
+
+    # Print results
+    for prime, diff_ratios in results.items():
+        print(f"Prime: {prime}, Differences Divided by Original: {diff_ratios}")
+
+    # Generate a scatter plot
+    plt.figure(figsize=(12, 6))
+    plt.scatter(all_primes, all_differences, color='blue', alpha=0.6, label='Differences/Original')
+    plt.axhline(0, color='red', linestyle='--', linewidth=0.8, label='Zero Line')
+
+    # Beautify the plot
+    plt.title("Differences Divided by Original Primes")
+    plt.xlabel("Prime Numbers")
+    plt.ylabel("Differences Divided by Original")
+    plt.grid(alpha=0.3)
+    plt.legend()
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
