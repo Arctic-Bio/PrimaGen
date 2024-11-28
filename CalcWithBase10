@@ -1,0 +1,57 @@
+from math import gcd
+from functools import reduce
+
+def lcm(numbers):
+    """Compute the least common multiple (LCM) of a list of numbers."""
+    return reduce(lambda x, y: x * y // gcd(x, y), numbers)
+
+def construct_prime_candidates(max_m, foundational_primes):
+    """
+    Construct numbers that are prime candidates using the foundational primes.
+    
+    Parameters:
+        max_m (int): The maximum multiplier for the LCM base.
+        foundational_primes (list): A list of foundational primes (e.g., [2, 3, 5, 7, 9]).
+    
+    Returns:
+        list: A list of candidate numbers that are not divisible by the foundational primes.
+    """
+    base_lcm = lcm(foundational_primes)
+    candidates = []
+
+    # Iterate over multiples of the LCM
+    for m in range(1, max_m + 1):
+        # Try all remainders within one cycle of the LCM
+        for c in range(1, base_lcm):
+            # Check that `c` is not divisible by any foundational prime
+            if all(c % p != 0 for p in foundational_primes):
+                # Construct candidate number
+                n = base_lcm * m + c
+                candidates.append(n)
+    
+    return candidates
+
+def is_prime(n):
+    """
+    Check if a number is prime. (Simple primality test for verification.)
+    """
+    if n <= 1:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+# Parameters
+foundational_primes = [2, 3, 5, 7]  # Base-10 foundational primes
+max_m = 10  # Maximum multiplier for the LCM
+
+# Generate candidates
+candidates = construct_prime_candidates(max_m, foundational_primes)
+
+# Filter primes (optional, for verification)
+primes = [n for n in candidates if is_prime(n)]
+
+# Output results
+print("Constructed Candidates:", candidates)
+print("Primes from Candidates:", primes)
