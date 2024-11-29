@@ -1,0 +1,101 @@
+from sympy import isprime
+from itertools import combinations
+from collections import defaultdict
+import math
+from tqdm import tqdm
+
+#This system attempts to identify the formulas that go int odifferent priem families. Hope you enjoy because it seems like it works.
+#PS YOGOS stands for You Only Get One Shot which is the code name of this project:D
+
+# Generate the first 1000 primes
+def generate_primes(limit):
+    primes = []
+    num = 2
+    while len(primes) < limit:
+        if isprime(num):
+            primes.append(num)
+        num += 1
+    return primes
+
+primes = generate_primes(1000)
+
+# Detect families and generate rules
+families = defaultdict(list)
+
+def check_family_rule(prime_list, candidate, rule):
+    """
+    Check if the candidate satisfies the family rule.
+    """
+    for prime in prime_list:
+        try:
+            result = eval(rule.replace("x", str(prime)))
+            result = int(round(result))  # Ensure result is an integer
+            if result != candidate:
+                return False
+        except:
+            return False
+    return True
+
+def predict_next_primes(rule, start, count=5):
+    """
+    Predict the next `count` primes using the given rule starting from `start`.
+    """
+    predicted_primes = []
+    current = start
+    while len(predicted_primes) < count:
+        try:
+            next_value = eval(rule.replace("x", str(current)))
+            next_value = int(round(next_value))
+            if isprime(next_value):
+                predicted_primes.append(next_value)
+            current = next_value
+        except:
+            break
+    return predicted_primes
+
+def find_families(primes):
+    """
+    Detect prime families using additive, multiplicative, exponential, and cyclistic rules.
+    """
+    family_rules = []
+    for p1, p2 in tqdm(combinations(primes, 2), total=len(primes) * (len(primes) - 1) // 2, desc="Analyzing Pairs"):
+        differences = {
+            "additive": f"x + {p2 - p1}",
+            "multiplicative": f"x * {p2 / p1:.10f}",
+            "exponential": f"x ** {math.log(p2, p1):.10f}",
+        }
+        for rule_name, rule in differences.items():
+            try:
+                predicted = eval(rule.replace("x", str(p1)))
+                predicted = int(round(predicted))  # Ensure predicted is an integer
+                if isprime(predicted) and predicted == p2:
+                    if check_family_rule([p1], p2, rule):
+                        families[rule].append(p1)
+                        families[rule].append(p2)
+                        if rule not in family_rules:
+                            family_rules.append(rule)
+                            # Real-time update for new family
+                            print(f"\nNew family detected!")
+                            print(f"Rule: {rule}")
+                            print(f"Example primes: {sorted(set(families[rule]))[:3]}")
+                            # Test extendability
+                            extended_primes = predict_next_primes(rule, p2, count=5)
+                            print(f"Extended primes: {extended_primes if extended_primes else 'None'}")
+            except:
+                continue
+    return family_rules
+
+# Analyze primes for families
+print("Starting analysis of prime families...\n")
+rules = find_families(primes)
+
+# Print results
+print("\nPrime Families Detected:")
+for rule, family in families.items():
+    unique_family = sorted(set(family))
+    print(f"Rule: {rule}")
+    print(f"Example primes in family: {unique_family[:3]}")
+    predictions = predict_next_primes(rule, unique_family[-1], count=5)
+    print(f"Predicting next primes: {predictions if predictions else 'None'}\n")
+
+print("Analysis complete!")
