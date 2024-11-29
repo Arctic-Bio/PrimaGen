@@ -1,0 +1,68 @@
+import numpy as np
+from sympy import primerange, isprime
+import matplotlib.pyplot as plt
+
+# Function to generate a list of primes up to a limit
+def generate_primes(limit=1000):
+    primes = list(primerange(1, limit))
+    return primes
+
+# Function to fit a polynomial to the primes (fitting will be based on indices)
+def poly_fit(primes, degree=6):  # Adjust the degree if needed
+    x = np.arange(1, len(primes) + 1)  # Indices of primes
+    coeffs = np.polyfit(x, primes, degree)
+    return coeffs
+
+# Function to predict a prime at a specific index using the polynomial fit
+def predict_prime_at_index(primes, index, coeffs):
+    # Predict the prime value at the given index using the polynomial fit
+    predicted_value = np.polyval(coeffs, index)  # Evaluate polynomial at the given index
+    predicted_value = round(predicted_value)  # Round the value to the nearest integer
+
+    # Ensure the predicted value is odd and prime, no iterations
+    if predicted_value % 2 == 0:  # If even, make it odd
+        predicted_value += 1
+
+    # Check if the predicted value is prime, and if not, find the next prime
+    iterations = 0
+    while not isprime(predicted_value):
+        predicted_value += 2  # Only check odd numbers to avoid even numbers
+        iterations += 1
+
+    return predicted_value, iterations
+
+# Function to predict a large prime at a specific index using the polynomial fit
+def predict_large_prime_at_index(primes, target_index=5000, degree=6):
+    # Fit a polynomial to the known primes
+    coeffs = poly_fit(primes, degree)
+
+    # Predict the prime at the specific index (target_index)
+    prime, iterations = predict_prime_at_index(primes, target_index, coeffs)
+
+    return prime, iterations
+
+# Generate the first 100 primes
+primes = generate_primes(limit=100)
+
+# Predict a prime at a specific index (for example, index = 5000)
+target_index = 5000
+predicted_prime, iterations = predict_large_prime_at_index(primes, target_index)
+
+print(f"Predicted Prime at index {target_index}: {predicted_prime}")
+print(f"Iterations to find prime: {iterations}")
+
+# Plotting the results
+plt.figure(figsize=(10, 6))
+
+# Plot the known primes
+plt.plot(primes, 'bo', label='Known Primes')
+
+# Plot the predicted prime at the specified index
+plt.plot(target_index, predicted_prime, 'ro', label=f'Predicted Prime at Index {target_index}')
+
+plt.xlabel('Index')
+plt.ylabel('Prime Numbers')
+plt.title('Prime Numbers and Predicted Prime')
+plt.legend()
+plt.grid(True)
+plt.show()
