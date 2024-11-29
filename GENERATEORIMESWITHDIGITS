@@ -1,0 +1,74 @@
+import numpy as np
+from sympy import primerange, isprime
+import matplotlib.pyplot as plt
+
+
+# Function to generate a list of primes up to a limit
+def generate_primes(limit=1000):
+    primes = list(primerange(1, limit))
+    return primes
+
+
+# Function to fit a polynomial to the primes
+def poly_fit(primes, degree=6):  # Increased degree for better fit
+    x = np.arange(1, len(primes) + 1)
+    # Fit a polynomial to the primes
+    coeffs = np.polyfit(x, primes, degree)
+    return coeffs
+
+
+# Function to predict the next prime based on polynomial fitting
+def predict_next_prime(primes, coeffs):
+    x_new = len(primes) + 1  # New index for prediction
+    predicted_value = np.polyval(coeffs, x_new)  # Evaluate polynomial at the new point
+    predicted_value = round(predicted_value)  # Round the value to the nearest integer
+
+    # Ensure the predicted value is prime and unique
+    while not isprime(predicted_value) or predicted_value in primes:
+        predicted_value += 1  # Try the next number if it's not prime or already predicted
+
+    return predicted_value
+
+
+# Function to predict a large prime using the polynomial
+def predict_large_prime(primes, degree=6, target_digits=6, num_predictions=50):
+    coeffs = poly_fit(primes, degree)
+    predicted_primes = []
+
+    # Extrapolate the polynomial and predict multiple primes
+    while len(predicted_primes) < num_predictions:
+        predicted_prime = predict_next_prime(primes, coeffs)
+        primes.append(predicted_prime)  # Add the predicted prime to the list
+        predicted_primes.append(predicted_prime)
+
+    # Find the first prime that meets the target digit requirement
+    for prime in predicted_primes:
+        if len(str(prime)) >= target_digits:
+            return prime
+
+    return predicted_primes[-1]  # Return the largest predicted prime if none meet the digit criteria
+
+
+# Generate the first 100 primes
+primes = generate_primes(limit=100)
+
+# Predict a large prime with at least 6 digits
+large_prime = predict_large_prime(primes, degree=6, target_digits=6)
+
+print(f"Predicted large prime: {large_prime}")
+
+# Plotting the results
+plt.figure(figsize=(10, 6))
+
+# Plot the known primes
+plt.plot(primes, 'bo', label='Known Primes')
+
+# Plot the predicted large prime (just the last predicted value)
+plt.plot(len(primes), large_prime, 'ro', label='Predicted Large Prime')
+
+plt.xlabel('Index')
+plt.ylabel('Prime Numbers')
+plt.title('Prime Numbers and Predicted Large Prime')
+plt.legend()
+plt.grid(True)
+plt.show()
