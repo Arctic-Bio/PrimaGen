@@ -1,0 +1,68 @@
+import numpy as np
+from sympy import primerange
+from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
+
+
+# Function to generate a list of primes up to a limit
+def generate_primes(limit=1000):
+    primes = list(primerange(1, limit))
+    return primes
+
+
+# Function to fit a higher-order polynomial to a list of primes
+def higher_order_polynomial(x, *params):
+    degree = len(params) - 1
+    return sum([params[i] * x ** (degree - i) for i in range(degree + 1)])
+
+
+# Function to find families of primes with repeatable polynomial patterns
+def find_prime_families(primes, degree=4, threshold=10, max_family_size=20):
+    prime_families = []
+    for start in range(len(primes)):
+        for end in range(start + 2, min(start + max_family_size, len(primes))):
+            prime_subset = primes[start:end]
+            x_values = np.arange(1, len(prime_subset) + 1)
+            try:
+                # Fit a higher-order polynomial to the subset
+                params, _ = curve_fit(higher_order_polynomial, x_values, prime_subset, p0=[1] * degree)
+
+                # Check how well the polynomial fits the prime subset
+                y_fit = higher_order_polynomial(x_values, *params)
+                residuals = np.abs(np.array(prime_subset) - y_fit)
+
+                # If the residuals are within a small threshold, consider it a valid family
+                if np.all(residuals < threshold):
+                    prime_families.append((prime_subset, params))
+            except Exception as e:
+                continue  # Skip any families that fail the polynomial fit
+
+    return prime_families
+
+
+# Generate the first 1000 primes
+primes = generate_primes(limit=1000)
+
+# Find families of primes with repeatable polynomial patterns
+prime_families = find_prime_families(primes)
+
+# Display the results
+print(f"Found {len(prime_families)} families of primes with repeatable polynomial patterns.\n")
+
+# Print out the details of the families
+for i, (family, params) in enumerate(prime_families):
+    print(f"Family {i + 1}: {family}")
+    print(f"Fitted polynomial parameters: {params}\n")
+
+    # Plot the family and the fitted polynomial
+    x_values = np.arange(1, len(family) + 1)
+    plt.plot(x_values, family, 'bo', label=f"Prime Family {i + 1}")
+    y_fit = higher_order_polynomial(x_values, *params)
+    plt.plot(x_values, y_fit, 'r-', label=f"Fitted Polynomial for Family {i + 1}")
+
+plt.xlabel('Index')
+plt.ylabel('Prime Numbers')
+plt.title('Prime Families with Fitted Polynomials')
+plt.legend()
+plt.grid(True)
+plt.show()
