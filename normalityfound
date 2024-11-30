@@ -1,0 +1,166 @@
+import numpy as np
+import plotly.graph_objects as go
+from sympy import primerange
+
+# Generate the first 500 primes
+primes = list(primerange(2, 5000))[:500]
+
+# Normalize the primes to fit them within a certain range (for visualization purposes)
+norm_primes = (np.array(primes) - np.min(primes)) / (np.max(primes) - np.min(primes))
+
+
+# Higher-dimensional Sphere (S^4 or S^5)
+def map_to_higher_dimensional_sphere(norm_primes, dim=4):
+    # Use spherical coordinates in a higher dimension
+    angles = np.linspace(0, 2 * np.pi, len(norm_primes))  # Divide into 'n' angular slices
+    coordinates = np.zeros((len(norm_primes), dim))
+
+    for i in range(dim):
+        coordinates[:, i] = np.cos(angles * (i + 1)) * (norm_primes ** (1 / (i + 1)))
+
+    return coordinates
+
+
+# Torus Mapping (Higher-dimensional Torus)
+def map_to_torus(norm_primes, dim=3):
+    # Generate angles for the torus using prime numbers
+    theta = 2 * np.pi * norm_primes
+    phi = np.pi * norm_primes
+    r = 1  # Use unit torus
+
+    coordinates = np.zeros((len(norm_primes), dim))
+
+    for i in range(dim):
+        if i == 0:
+            coordinates[:, i] = r * np.cos(theta)
+        elif i == 1:
+            coordinates[:, i] = r * np.sin(theta)
+        else:
+            coordinates[:, i] = r * np.cos(phi)
+
+    return coordinates
+
+
+# Function for Möbius Strip (non-orientable manifold)
+def map_to_mobius_strip(norm_primes):
+    u = norm_primes * 2 * np.pi  # Longitude
+    v = np.pi * norm_primes  # Latitude
+
+    x = np.cos(u) + np.sin(v) * np.cos(u)
+    y = np.sin(u) + np.sin(v) * np.sin(u)
+    z = np.cos(v)
+
+    return x, y, z
+
+
+# Function for Fractal Geometry Mapping (e.g., Mandelbrot Set)
+def map_to_fractal(norm_primes, max_iter=100):
+    # Using the Mandelbrot set to visualize fractal structures
+    x_vals, y_vals = [], []
+
+    for prime in norm_primes:
+        c = complex(prime, prime)  # Create a complex number for each prime
+        z = 0
+        for i in range(max_iter):
+            z = z * z + c
+            if abs(z) > 2:
+                break
+        x_vals.append(c.real)
+        y_vals.append(c.imag)
+
+    return np.array(x_vals), np.array(y_vals)
+
+
+# Higher Dimensional Sphere (S^4)
+coords_sphere = map_to_higher_dimensional_sphere(norm_primes, dim=4)
+
+# Torus Mapping (3D Torus)
+coords_torus = map_to_torus(norm_primes, dim=3)
+
+# Möbius Strip Mapping (3D Projection)
+x_mobius, y_mobius, z_mobius = map_to_mobius_strip(norm_primes)
+
+# Fractal Geometry (Mandelbrot-like fractal)
+x_fractal, y_fractal = map_to_fractal(norm_primes)
+
+# Plotting with Plotly
+
+# Higher Dimensional Sphere (4D, projected in 3D)
+fig_sphere = go.Figure(data=[go.Scatter3d(
+    x=coords_sphere[:, 0], y=coords_sphere[:, 1], z=coords_sphere[:, 2],
+    mode='markers',
+    marker=dict(size=4, color=norm_primes, colorscale='Viridis', opacity=0.8)
+)])
+fig_sphere.update_layout(
+    title="Primes on Higher Dimensional Sphere (S^4)",
+    scene=dict(
+        xaxis_title='X',
+        yaxis_title='Y',
+        zaxis_title='Z'
+    ),
+    margin=dict(r=0, l=0, b=0, t=40),
+    template="plotly_dark"
+)
+
+# 3D Torus Plot
+fig_torus = go.Figure(data=[go.Scatter3d(
+    x=coords_torus[:, 0], y=coords_torus[:, 1], z=coords_torus[:, 2],
+    mode='markers',
+    marker=dict(size=4, color=norm_primes, colorscale='Cividis', opacity=0.8)
+)])
+fig_torus.update_layout(
+    title="Primes on 3D Torus",
+    scene=dict(
+        xaxis_title='X',
+        yaxis_title='Y',
+        zaxis_title='Z'
+    ),
+    margin=dict(r=0, l=0, b=0, t=40),
+    template="plotly_dark"
+)
+
+# Möbius Strip Plot (3D)
+fig_mobius = go.Figure(data=[go.Scatter3d(
+    x=x_mobius, y=y_mobius, z=z_mobius,
+    mode='markers',
+    marker=dict(size=4, color=norm_primes, colorscale='Plasma', opacity=0.8)
+)])
+fig_mobius.update_layout(
+    title="Primes on Möbius Strip",
+    scene=dict(
+        xaxis_title='X',
+        yaxis_title='Y',
+        zaxis_title='Z'
+    ),
+    margin=dict(r=0, l=0, b=0, t=40),
+    template="plotly_dark"
+)
+
+# Fractal Geometry Plot (Mandelbrot-like Fractal)
+fig_fractal = go.Figure(data=[go.Scatter(
+    x=x_fractal, y=y_fractal,
+    mode='markers',
+    marker=dict(size=4, color=norm_primes, colorscale='Viridis', opacity=0.8)
+)])
+fig_fractal.update_layout(
+    title="Primes in Fractal Geometry (Mandelbrot Set)",
+    xaxis_title='X',
+    yaxis_title='Y',
+    template="plotly_dark"
+)
+
+# Show the plots
+fig_sphere.show()
+fig_torus.show()
+fig_mobius.show()
+fig_fractal.show()
+
+# Print the transformed coordinates for the first few primes
+print("Transformed Coordinates on Higher Dimensional Sphere (First 5):")
+print(coords_sphere[:5])
+print("Transformed Coordinates on 3D Torus (First 5):")
+print(coords_torus[:5])
+print("Transformed Coordinates on Möbius Strip (First 5):")
+print(list(zip(x_mobius[:5], y_mobius[:5], z_mobius[:5])))
+print("Transformed Coordinates in Fractal Geometry (First 5):")
+print(list(zip(x_fractal[:5], y_fractal[:5])))
