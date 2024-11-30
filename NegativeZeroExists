@@ -1,0 +1,61 @@
+import sympy
+
+
+# Advanced Negative Zero Theory for Prime Prediction
+def negative_zero_theory_advanced_refined(limit):
+    primes = []
+    for n in range(2, limit + 1):
+        # Apply the negative zero theory combined with a stricter prime check
+        result = 0
+        for i in range(2, n):
+            # Check for prime divisibility (using traditional method with a negative void concept)
+            if n % i == 0:
+                result += (-1) ** i * n // i  # Adjust according to negative zero logic
+        # Refining prime check with additional filter
+        if result == 0 and is_prime(n):
+            primes.append(n)
+    return primes
+
+
+# Helper function to check if a number is prime
+def is_prime(n):
+    if n <= 1:
+        return False
+    for i in range(2, int(n ** 0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+
+# Function to test the accuracy of the prediction
+def test_negative_zero_theory_accuracy(predicted_primes, actual_primes):
+    common_primes = set(predicted_primes).intersection(set(actual_primes))
+    total_predicted = len(predicted_primes)
+    total_actual = len(actual_primes)
+    correct_predictions = len(common_primes)
+    accuracy = (correct_predictions / total_actual) * 100
+
+    return common_primes, accuracy, total_predicted, total_actual, correct_predictions
+
+
+# Limit for checking primes up to
+limit = 200
+
+# Use sympy's prime generation for actual primes in the range
+actual_primes = list(sympy.primerange(2, limit + 1))
+
+# Get predicted primes using advanced negative zero theory
+predicted_primes = negative_zero_theory_advanced_refined(limit)
+
+# Test the accuracy of predictions
+common_primes, accuracy, total_predicted, total_actual, correct_predictions = test_negative_zero_theory_accuracy(
+    predicted_primes, actual_primes)
+
+# Output the results
+print(f"Predicted primes using negative zero theory: {predicted_primes}")
+print(f"Actual primes: {actual_primes}")
+print(f"Common primes: {common_primes}")
+print(f"Accuracy: {accuracy:.2f}%")
+print(f"Total predicted primes: {total_predicted}")
+print(f"Total actual primes: {total_actual}")
+print(f"Correct predictions: {correct_predictions}")
