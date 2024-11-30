@@ -1,0 +1,134 @@
+import numpy as np
+from sympy import primerange
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+
+# Prime numbers generation (for example, first 500 primes)
+primes = list(primerange(2, 5000))[:500]
+
+
+# Function to map primes to a non-Euclidean space (e.g., sphere, hyperbolic space, or a torus)
+def map_to_non_euclidean_space(primes, topology_params, dim=4):
+    # Example: Spherical embedding (we could replace this with any manifold, like a hyperbolic space)
+    theta = np.linspace(0, 2 * np.pi, len(primes))
+    phi = np.linspace(0, np.pi, len(primes))
+
+    r = topology_params[0]  # Adjust radius or curvature based on topology parameter
+
+    # Mapping to spherical coordinates (for example)
+    x = r * np.sin(phi) * np.cos(theta)
+    y = r * np.sin(phi) * np.sin(theta)
+    z = r * np.cos(phi)
+
+    coords = np.column_stack((x, y, z))  # Combine coordinates in a 3D space
+    return coords
+
+
+# Function to compute gaps in the mapped space
+def calculate_prime_gaps(coords):
+    diffs = np.diff(coords, axis=0)
+    gaps = np.linalg.norm(diffs, axis=1)
+    return gaps
+
+
+# Loss function that accounts for the topology, looking at the gaps and prime spacing
+def adjusted_loss(gaps, primes, topology_params):
+    gap_variance = np.var(gaps)
+    # Add a penalty term that depends on the topology (e.g., curvature, radius)
+    topology_penalty = np.sum(topology_params ** 2)  # Adjust based on the model
+    return gap_variance + topology_penalty
+
+
+# Gradient function to calculate the gradient of the loss with respect to topology parameters
+def gradient_of_loss(gaps, primes, topology_params):
+    # Compute the derivative of the loss with respect to the topology parameters
+    # Compute the gradient of the variance with respect to the gaps
+    gap_variance_gradient = 2 * np.mean(gaps)  # Simplified gradient of variance
+
+    # Derivative of the penalty term with respect to the topology parameters
+    topology_penalty_gradient = 2 * topology_params  # Derivative of the penalty term
+
+    # Combine both gradients
+    grad = gap_variance_gradient + topology_penalty_gradient
+    return grad
+
+
+# Function to tweak the shape of the space and optimize the topology
+def optimize_topology(primes, iterations=10000, learning_rate=0.01):
+    # Start with initial topology parameters (e.g., radius for spherical space)
+    topology_params = np.array([1.0])  # This can represent things like radius or curvature
+
+    # Convert primes to a non-Euclidean space (initial mapping)
+    coords = map_to_non_euclidean_space(primes, topology_params)
+    gaps = calculate_prime_gaps(coords)
+
+    prev_loss = float('inf')
+    for iteration in range(iterations):
+        # Compute the current loss
+        loss = adjusted_loss(gaps, primes, topology_params)
+
+        # If loss converges, stop early
+        if abs(prev_loss - loss) < 1e-5:
+            print(f"Converged at iteration {iteration + 1}, Loss: {loss}")
+            break
+
+        # Update topology parameters using gradient descent
+        grad = gradient_of_loss(gaps, primes, topology_params)
+
+        # Ensure the gradient and topology_params have the same shape
+        grad = np.reshape(grad, topology_params.shape)
+
+        # Update rule based on gradient
+        topology_params -= learning_rate * grad  # Update parameters based on gradient
+
+        # Update coordinates and gaps
+        coords = map_to_non_euclidean_space(primes, topology_params)
+        gaps = calculate_prime_gaps(coords)
+
+        prev_loss = loss
+
+    return topology_params, coords, gaps
+
+
+# Visualize the final topology
+def visualize_final_topology(coords, primes):
+    plt.figure(figsize=(8, 6))
+
+    # Highlight the prime points on the plot
+    plt.scatter(coords[:, 0], coords[:, 1], c='b', label='Mapped Primes')
+
+    # Add labels for the primes
+    for i, prime in enumerate(primes[:len(coords)]):  # Limit to the number of primes plotted
+        plt.text(coords[i, 0], coords[i, 1], str(prime), fontsize=8, color='red')
+
+    plt.title("Primes in Optimized Non-Euclidean Space")
+    plt.xlabel("X Coordinate")
+    plt.ylabel("Y Coordinate")
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+# Calculate and print the standard deviation of the gaps and the normalized gaps
+def print_standard_deviations(gaps):
+    # Standard deviation of original gaps
+    std_dev = np.std(gaps)
+    print(f"Standard Deviation of Gaps: {std_dev:.4f}")
+
+    # Normalize the gaps using StandardScaler
+    scaler = StandardScaler()
+    normalized_gaps = scaler.fit_transform(gaps.reshape(-1, 1)).flatten()
+
+    # Standard deviation of normalized gaps
+    normalized_std_dev = np.std(normalized_gaps)
+    print(f"Standard Deviation of Normalized Gaps: {normalized_std_dev:.4f}")
+
+
+# Running the optimization
+topology_params, final_coords, final_gaps = optimize_topology(primes)
+
+# Print standard deviations
+print_standard_deviations(final_gaps)
+
+# Visualize the result
+visualize_final_topology(final_coords, primes)
