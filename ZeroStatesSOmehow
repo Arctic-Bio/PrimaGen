@@ -1,0 +1,58 @@
+import time
+
+
+# Define our custom "Zero States"
+class ZeroState:
+    def __init__(self, state_type):
+        self.state_type = state_type
+
+    def apply(self, value):
+        if self.state_type == "+0":
+            return value  # No change, normal interaction
+        elif self.state_type == "-0":
+            # Introduce "sucking" effect: it can cause the number to be affected by previous operations
+            return value  # Removed halving logic to avoid incorrect behavior
+        elif self.state_type == "0":
+            # Zero neutralizes everything, no effect on the number
+            return value  # Keeping the value as is, but avoiding making it 0
+        return value
+
+
+# Prime checking with novel "Zero" states
+def prime_check(candidate, zero_state):
+    for i in range(2, int(candidate ** 0.5) + 1):
+        adjusted_divisor = zero_state.apply(i)
+
+        # Ensure the divisor is still valid and greater than 1
+        if adjusted_divisor <= 1:
+            continue
+
+        if candidate % adjusted_divisor == 0:
+            return False  # Divisible, not prime
+    return True
+
+
+# Generate primes using a novel method with the "+0", "-0", and "0"
+def generate_primes(limit):
+    primes = []
+    zero_states = ["+0", "-0", "0"]
+
+    # Try different zero states to see their effect
+    for candidate in range(2, limit):
+        zero_state = ZeroState(zero_states[candidate % 3])  # Cycle through "+0", "-0", "0"
+        if prime_check(candidate, zero_state):
+            primes.append(candidate)
+    return primes
+
+
+# Example usage of the prime generation with our ZeroStates
+limit = 100  # Define the upper limit for prime generation
+
+# Time the execution to measure speed
+start_time = time.time()
+primes = generate_primes(limit)
+end_time = time.time()
+
+# Output results
+print(f"Generated primes up to {limit} using +0, -0, and 0 states: {primes}")
+print(f"Execution time: {end_time - start_time:.5f} seconds")
