@@ -115,7 +115,11 @@ def negative_zero_theory_is_prime(candidate):
     return False
 ```
 
+Representations of a shape that I have called a "Rat tail" as a joke, yet that seems to be able to giev form to primes.
+
 ![image](https://github.com/user-attachments/assets/558c38a1-a847-44ec-a5f9-395fd9b0c5bf)
+
+![image](https://github.com/user-attachments/assets/4c83e317-dc1a-44ea-bdce-5f26a827369e)
 
 
 This model uses the idea of an **alternating sign** in the divisibility check to simulate the **disruptive** effects of negative zero, affecting the way primes are identified. The theory suggests that certain primes might be influenced by this "void," altering their behavior when tested with traditional methods.
