@@ -1,0 +1,32 @@
+# Redefining the functions to test primes up to 100
+def test_2a_plus_b(limit):
+    primes = [n for n in range(2, limit + 1) if is_prime(n)]
+    results = {}
+
+    for p in primes:
+        found = False
+        for A in range(1, p // 2 + 1):
+            B = p - 2 * A
+            if B > 0 and B % 2 == 1:  # Ensure B is positive and odd
+                results[p] = (A, B)
+                found = True
+                break
+        if not found:
+            results[p] = None  # No valid A and B found
+
+    return results
+
+def is_prime(n):
+    if n < 2:
+        return False
+    for i in range(2, int(n**0.5) + 1):
+        if n % i == 0:
+            return False
+    return True
+
+# Test for primes up to 100
+prime_results_large = test_2a_plus_b(100)
+
+# Displaying the results for primes up to 100
+for prime, decomposition in prime_results_large.items():
+    print(f"Prime {prime}: 2A + B = {decomposition if decomposition else 'No decomposition found'}")
