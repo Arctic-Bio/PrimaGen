@@ -115,6 +115,9 @@ def negative_zero_theory_is_prime(candidate):
     return False
 ```
 
+![image](https://github.com/user-attachments/assets/558c38a1-a847-44ec-a5f9-395fd9b0c5bf)
+
+
 This model uses the idea of an **alternating sign** in the divisibility check to simulate the **disruptive** effects of negative zero, affecting the way primes are identified. The theory suggests that certain primes might be influenced by this "void," altering their behavior when tested with traditional methods.
 
 ### Future Work and Exploration
