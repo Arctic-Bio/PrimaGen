@@ -1,0 +1,39 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sympy import primerange, symbols, sin
+
+# Generate the first 500 prime numbers
+primes = list(primerange(2, 5000))[:500]
+
+# Apply FFT to the prime numbers
+fft_primes = np.fft.fft(primes)
+
+# Inverse FFT to reconstruct the primes (real part)
+reconstructed_primes = np.fft.ifft(fft_primes).real  # Use real part for approximation
+
+# Normalize the reconstructed primes to better fit the original primes
+reconstructed_primes = np.real(reconstructed_primes)  # In case of any small imaginary parts
+
+# Plot the original primes and the reconstructed primes
+plt.figure(figsize=(12, 6))
+
+# Plot the original primes
+plt.subplot(2, 1, 1)
+plt.plot(primes, label="Original Primes", color='blue')
+plt.title("Original Prime Numbers")
+plt.xlabel("Index")
+plt.ylabel("Prime Value")
+
+# Plot the reconstructed primes
+plt.subplot(2, 1, 2)
+plt.plot(reconstructed_primes, label="Reconstructed Primes (IFFT)", color='orange')
+plt.title("Reconstructed Prime Numbers Using IFFT")
+plt.xlabel("Index")
+plt.ylabel("Reconstructed Prime Value")
+
+plt.tight_layout()
+plt.show()
+
+# Print the first few original and reconstructed primes for comparison
+print("Original Primes (First 5):", primes[:5])
+print("Reconstructed Primes (First 5):", reconstructed_primes[:5])
