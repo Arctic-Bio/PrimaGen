@@ -1,0 +1,94 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sympy import primerange
+
+# Generate the first 500 primes
+primes = list(primerange(2, 5000))[:500]
+
+# Normalize the primes to fit them within a certain range (for visualization purposes)
+norm_primes = (np.array(primes) - np.min(primes)) / (np.max(primes) - np.min(primes))
+
+
+# Function to map primes to spherical coordinates (on a unit sphere)
+def map_to_sphere(norm_primes):
+    theta = 2 * np.pi * norm_primes  # Longitude
+    phi = np.pi * norm_primes  # Latitude
+
+    # Spherical to Cartesian conversion
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+
+    return x, y, z
+
+
+# Function to map primes to toroidal coordinates (on a torus)
+def map_to_torus(norm_primes):
+    # Use two angles to define points on a torus
+    u = 2 * np.pi * norm_primes  # First angle (longitude)
+    v = 2 * np.pi * (norm_primes ** 2)  # Second angle (latitude)
+
+    # Parametrize the torus
+    R = 1  # Major radius
+    r = 0.3  # Minor radius
+    x = (R + r * np.cos(v)) * np.cos(u)
+    y = (R + r * np.cos(v)) * np.sin(u)
+    z = r * np.sin(v)
+
+    return x, y, z
+
+
+# Function to map primes to hyperbolic coordinates (Poincaré disk)
+def map_to_hyperbolic(norm_primes):
+    # Map to polar coordinates in the unit disk
+    r = np.sqrt(norm_primes)  # Radius in the disk
+    theta = 2 * np.pi * norm_primes  # Angle
+
+    # Convert polar coordinates to Cartesian for the disk
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+
+    return x, y
+
+
+# Map primes to the three different topologies
+x_sphere, y_sphere, z_sphere = map_to_sphere(norm_primes)
+x_torus, y_torus, z_torus = map_to_torus(norm_primes)
+x_hyperbolic, y_hyperbolic = map_to_hyperbolic(norm_primes)
+
+# Plotting the three topologies
+fig = plt.figure(figsize=(18, 6))
+
+# Plot the sphere
+ax1 = fig.add_subplot(131, projection='3d')
+ax1.scatter(x_sphere, y_sphere, z_sphere, color='blue', label='Primes on Sphere')
+ax1.set_title('Primes on a Sphere')
+ax1.set_xlabel('X')
+ax1.set_ylabel('Y')
+ax1.set_zlabel('Z')
+
+# Plot the torus
+ax2 = fig.add_subplot(132, projection='3d')
+ax2.scatter(x_torus, y_torus, z_torus, color='green', label='Primes on Torus')
+ax2.set_title('Primes on a Torus')
+ax2.set_xlabel('X')
+ax2.set_ylabel('Y')
+ax2.set_zlabel('Z')
+
+# Plot the hyperbolic space
+ax3 = fig.add_subplot(133)
+ax3.scatter(x_hyperbolic, y_hyperbolic, color='red', label='Primes in Hyperbolic Space')
+ax3.set_title('Primes in Hyperbolic Space (Poincaré Disk)')
+ax3.set_xlabel('X')
+ax3.set_ylabel('Y')
+
+plt.tight_layout()
+plt.show()
+
+# Print the transformed coordinates for the first few primes
+print("Transformed Coordinates on Sphere (First 5):")
+print(list(zip(x_sphere[:5], y_sphere[:5], z_sphere[:5])))
+print("Transformed Coordinates on Torus (First 5):")
+print(list(zip(x_torus[:5], y_torus[:5], z_torus[:5])))
+print("Transformed Coordinates in Hyperbolic Space (First 5):")
+print(list(zip(x_hyperbolic[:5], y_hyperbolic[:5])))
