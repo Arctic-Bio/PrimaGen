@@ -1,0 +1,40 @@
+import time
+
+#Okay so oddly enough negative zero, such as a 0 but with a negative connontation, such as a void tha tis outside of equilibrium with things such as a negative sp[atial voide instead of a neutral one tha tdoesnt suck up everything in existance, or a positive one that repels all things in existance, seems to work for primes? Als oI know that rthis is some heavy theoretical stuff and it was 2AM when I wrote this code so bear with it please.
+
+# Advanced Negative Zero Theory for Prime Prediction (direct prime generation)
+def negative_zero_theory_is_prime(candidate):
+    result = 0  # Initialize result to 0 for Negative Zero approach
+
+    # Apply Negative Zero Theory concept (heuristic approach)
+    for i in range(2, int(candidate ** 0.5) + 1):
+        if candidate % i == 0:
+            # Adjust according to Negative Zero Theory with an alternating sign concept
+            result += (-1) ** i * candidate // i
+
+    # If no divisors were found and the result is 0, consider it a prime
+    if result == 0 and candidate > 1:
+        return True
+    return False
+
+
+# Function to generate normal primes using Negative Zero Theory
+def generate_normal_primes(limit):
+    primes = []
+    for candidate in range(2, limit):
+        if negative_zero_theory_is_prime(candidate):
+            primes.append(candidate)
+    return primes
+
+
+# Example usage to generate normal primes up to a limit
+limit = 1000  # Define the upper limit for prime generation
+
+# Time the execution to measure speed
+start_time = time.time()
+primes = generate_normal_primes(limit)
+end_time = time.time()
+
+# Output results
+print(f"Generated normal primes up to {limit}: {primes}")
+print(f"Execution time: {end_time - start_time:.5f} seconds")
