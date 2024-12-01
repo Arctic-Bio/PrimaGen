@@ -1,0 +1,107 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+from sklearn.preprocessing import StandardScaler
+
+
+# Generate a list of primes up to a certain limit
+def generate_primes(limit):
+    primes = []
+    for num in range(2, limit):
+        for i in range(2, int(num ** 0.5) + 1):
+            if num % i == 0:
+                break
+        else:
+            primes.append(num)
+    return primes
+
+
+# Project primes into Euclidean space (initial embedding in 1D)
+def project_primes_to_space(primes):
+    scaler = StandardScaler()
+    prime_array = np.array(primes).reshape(-1, 1)
+    scaled_primes = scaler.fit_transform(prime_array)
+    return scaled_primes.flatten()
+
+
+# Compute the gaps between consecutive primes
+def compute_prime_gaps(primes):
+    return np.diff(primes)
+
+
+# Objective function to minimize the variance of prime gaps (both spatial and temporal)
+def objective_function(params, primes, indices):
+    # Extract warp factors for both spatial and time dimensions
+    spatial_warp_factor, time_warp_factor = params
+
+    # Apply warp factors to the primes (spatial and temporal adjustments)
+    warped_primes = primes * spatial_warp_factor
+    warped_indices = indices * time_warp_factor
+
+    # Calculate the warped gaps based on the adjusted primes
+    warped_gaps = np.diff(warped_primes) / np.diff(warped_indices)
+
+    # Minimize the variance of the prime gaps
+    gap_variance = np.var(warped_gaps)
+    return gap_variance
+
+
+# Adaptive warping to make prime gaps more regular
+def adaptive_warping(primes):
+    # Generate indices to represent time dimension (just the prime indices)
+    indices = np.arange(len(primes)) + 1  # Starting from 1 for the first prime
+
+    # Project primes into Euclidean space
+    embedding = project_primes_to_space(primes)
+
+    # Set initial warp factors for both spatial and time dimensions
+    initial_params = [1.0, 1.0]  # Starting with no warping for both dimensions
+
+    # Optimize the warp factors using the objective function
+    result = minimize(objective_function, initial_params, args=(embedding, indices), bounds=[(0.1, 5), (0.1, 5)])
+
+    # Extract the best warp factors for spatial and time dimensions
+    best_spatial_warp, best_time_warp = result.x
+
+    # Apply the best warp factors to the primes and indices
+    best_embedding = embedding * best_spatial_warp
+    best_indices = indices * best_time_warp
+
+    return best_embedding, best_indices, best_spatial_warp, best_time_warp
+
+
+# Main function
+def main():
+    primes = generate_primes(100)  # Generate primes up to 100
+    print(f"Primes generated: {primes}")
+
+    # Apply adaptive warping to the primes
+    best_embedding, best_indices, best_spatial_warp, best_time_warp = adaptive_warping(primes)
+
+    print(f"Best spatial warp factor: {best_spatial_warp}")
+    print(f"Best time warp factor: {best_time_warp}")
+
+    # Plot the original and warped primes in both spatial and time dimensions
+    plt.figure(figsize=(8, 6))
+    plt.subplot(2, 1, 1)
+    plt.scatter(range(len(primes)), primes, color='blue', label="Original Primes")
+    plt.scatter(range(len(primes)), best_embedding, color='red', label="Warped Primes (Spatial)")
+    plt.legend()
+    plt.xlabel('Index')
+    plt.ylabel('Prime Value')
+    plt.title(f"Prime Numbers with Spatial Warp Factor: {best_spatial_warp}")
+
+    plt.subplot(2, 1, 2)
+    plt.scatter(range(len(primes)), best_indices, color='blue', label="Original Indices (Time)")
+    plt.scatter(range(len(primes)), best_indices, color='red', label="Warped Indices (Time)")
+    plt.legend()
+    plt.xlabel('Index')
+    plt.ylabel('Index (Time)')
+    plt.title(f"Prime Indices with Time Warp Factor: {best_time_warp}")
+
+    plt.tight_layout()
+    plt.show()
+
+
+# Run the script
+main()
