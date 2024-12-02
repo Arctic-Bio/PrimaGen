@@ -1,0 +1,71 @@
+import numpy as np
+from sympy import primerange, isprime
+from scipy.optimize import curve_fit
+
+# Step 1: Generate Prime Numbers
+num_primes = 100
+primes = np.array(list(primerange(1, 1000)))[:num_primes]
+
+
+# Step 2: Define Elliptic Curve Transformation (Focusing on Elliptic Curve Geometry)
+def elliptic_curve_to_cartesian(r, theta):
+    """Elliptic curve transformation: Non-linear mapping."""
+    a = 1  # Semi-major axis
+    b = 0.5  # Semi-minor axis
+    x = a * np.cos(theta)
+    y = b * np.sin(theta)
+    z = np.sinh(r)  # Hyperbolic component along z-axis
+    return x, y, z
+
+
+# Step 3: Normalize Prime Numbers for Use as Radii
+normalized_primes = primes / max(primes) * 5  # Scale to manageable radii
+angles = np.linspace(0, 2 * np.pi, num_primes, endpoint=False)
+
+# Step 4: Apply the Elliptic Curve Transformation and Extract Gaps
+coords = np.array([elliptic_curve_to_cartesian(r, theta) for r, theta in zip(normalized_primes, angles)])
+x_coords = coords[:, 0]  # Focus on the x-coordinate for gap analysis
+
+# Step 5: Calculate Gaps in the x-coordinate (Prime Gaps)
+gaps = np.diff(x_coords)
+
+
+# Step 6: Define the cosine wave function to fit
+def cosine_wave(x, A, B, C, D):
+    return A * np.cos(B * x + C) + D
+
+
+# Fit the cosine wave to the gaps
+x_data = np.arange(len(gaps))  # The indices of the gaps
+y_data = gaps  # The prime gaps (x-coordinates of transformed data)
+
+# Initial guess for the parameters: amplitude, frequency, phase shift, vertical shift
+initial_guess = [np.max(y_data) - np.min(y_data), 2 * np.pi / len(gaps), np.pi, np.mean(y_data)]
+
+# Fit the curve
+params, params_covariance = curve_fit(cosine_wave, x_data, y_data, p0=initial_guess)
+
+
+# Function to predict the next prime based on the given index
+def predict_next_prime(index):
+    # Estimate the next gap using the fitted cosine wave
+    next_gap = cosine_wave(index, *params)
+
+    # Estimate the next prime number by adding the predicted gap to the last known prime
+    next_prime_candidate = primes[index - 1] + next_gap
+
+    # Check if the predicted number is prime
+    print(next_prime_candidate)
+    next_prime = next_prime_candidate
+    while not isprime(int(next_prime)):
+        next_prime += 1  # Increment the candidate until a prime is found
+
+    return int(next_prime)
+
+
+# Input: Specify the index for which you want to predict the next prime
+index = int(input("Enter the index to predict the next prime (e.g., 10): "))
+
+# Output: Predicted prime number for the given index
+predicted_prime = predict_next_prime(index)
+print(f"Predicted next prime at index {index}: {predicted_prime}")
