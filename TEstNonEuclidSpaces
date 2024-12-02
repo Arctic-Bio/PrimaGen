@@ -1,0 +1,180 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sympy import primerange
+from scipy.spatial.distance import pdist, squareform
+from sklearn.cluster import KMeans
+from mpl_toolkits.mplot3d import Axes3D
+
+# Step 1: Generate Prime Numbers
+num_primes = 100
+primes = np.array(list(primerange(1, 1000)))[:num_primes]
+
+# Step 2: Define Transformations for Different Non-Euclidean Geometries
+
+# Hyperbolic geometry (using the Poincaré disk model)
+def hyperbolic_to_cartesian(r, theta):
+    """Convert hyperbolic polar coordinates to Cartesian coordinates."""
+    x = np.sinh(r) * np.cos(theta)
+    y = np.sinh(r) * np.sin(theta)
+    z = np.cosh(r)
+    return x, y, z
+
+# Elliptic geometry (using simple elliptic curve transformations)
+def elliptic_curve_to_cartesian(r, theta):
+    """Elliptic curve transformation: Non-linear mapping."""
+    a = 1  # Semi-major axis
+    b = 0.5  # Semi-minor axis
+    x = a * np.cos(theta)
+    y = b * np.sin(theta)
+    z = np.sinh(r)  # Hyperbolic component along z-axis
+    return x, y, z
+
+# Spherical geometry (mapping to spherical coordinates)
+def spherical_to_cartesian(r, theta):
+    """Convert spherical coordinates to Cartesian coordinates."""
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+    z = r
+    return x, y, z
+
+# Minkowski space (Lorentzian geometry)
+def minkowski_to_cartesian(r, theta):
+    """Minkowski transformation (2D hyperbolic space)."""
+    x = np.sinh(r) * np.cos(theta)
+    y = np.sinh(r) * np.sin(theta)
+    z = np.cosh(r)
+    return x, y, z
+
+# Riemannian geometry (generalized curvature geometry)
+def riemannian_to_cartesian(r, theta):
+    """Riemannian transformation with curvature handling."""
+    curvature = 0.5  # Curvature constant
+    x = np.cos(curvature * r) * np.cos(theta)
+    y = np.cos(curvature * r) * np.sin(theta)
+    z = np.sin(curvature * r)
+    return x, y, z
+
+# Kählerian geometry (complex manifold)
+def kahlerian_to_cartesian(r, theta):
+    """Kählerian geometry transformation in complex plane."""
+    x = np.cos(r) * np.cos(theta)
+    y = np.sin(r) * np.sin(theta)
+    z = np.exp(r)
+    return x, y, z
+
+# Conformal space (preserves angles)
+def conformal_to_cartesian(r, theta):
+    """Conformal transformation with angle preservation."""
+    x = np.log(r) * np.cos(theta)
+    y = np.log(r) * np.sin(theta)
+    z = r
+    return x, y, z
+
+# Finsler geometry (generalization of Riemannian geometry)
+def finsler_to_cartesian(r, theta):
+    """Finsler space transformation with generalized distance metric."""
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+    z = np.sqrt(r)
+    return x, y, z
+
+# Projective geometry (projective plane transformation)
+def projective_to_cartesian(r, theta):
+    """Projective space transformation."""
+    x = np.sin(r) * np.cos(theta)
+    y = np.cos(r) * np.sin(theta)
+    z = np.tan(r)
+    return x, y, z
+
+# Affine geometry (straight-line space)
+def affine_to_cartesian(r, theta):
+    """Affine space transformation."""
+    x = r * np.cos(theta)
+    y = r * np.sin(theta)
+    z = r
+    return x, y, z
+
+# Dictionary of non-Euclidean spaces
+spaces = {
+    "Hyperbolic": hyperbolic_to_cartesian,
+    "Elliptic Curve": elliptic_curve_to_cartesian,
+    "Spherical": spherical_to_cartesian,
+    "Minkowski": minkowski_to_cartesian,
+    "Riemannian": riemannian_to_cartesian,
+    "Kählerian": kahlerian_to_cartesian,
+    "Conformal": conformal_to_cartesian,
+    "Finsler": finsler_to_cartesian,
+    "Projective": projective_to_cartesian,
+    "Affine": affine_to_cartesian
+}
+
+# Step 3: Normalize Prime Numbers for Use as Radii
+normalized_primes = primes / max(primes) * 5  # Scale to manageable radii
+angles = np.linspace(0, 2 * np.pi, num_primes, endpoint=False)
+
+# Step 4: Apply Transformations to Each Space and Analyze
+
+results = {}
+
+for space_name, transformation in spaces.items():
+    # Transform primes into the chosen space
+    coords = np.array([transformation(r, theta) for r, theta in zip(normalized_primes, angles)])
+    x_coords, y_coords = coords[:, 0], coords[:, 1]
+    z_coords = coords[:, 2]
+
+    # Step 5: Compute Pairwise Distances
+    distances = pdist(coords, metric='euclidean')
+    distance_matrix = squareform(distances)
+
+    # Store results for analysis
+    results[space_name] = {
+        "coordinates": coords,
+        "distances": distances
+    }
+
+    # Step 6: Cluster Analysis
+    num_clusters = 5
+    kmeans = KMeans(n_clusters=num_clusters)
+    cluster_labels = kmeans.fit_predict(coords)
+
+    # Visualize each space and check for cluster patterns
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x_coords, y_coords, z_coords, c=cluster_labels, cmap='viridis', label=f"{space_name} Clusters")
+    ax.set_title(f"Primes in {space_name} Space")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
+    plt.legend()
+    plt.show()
+
+    # Step 7: Analyze Distance Distributions
+    plt.figure(figsize=(8, 6))
+    plt.hist(distances, bins=30, color='blue', alpha=0.7)
+    plt.title(f"Pairwise Distances in {space_name} Space")
+    plt.xlabel("Distance")
+    plt.ylabel("Frequency")
+    plt.grid(True)
+    plt.show()
+
+    # Step 8: Examine Gaps in the Prime Numbers (using the x-coordinate of transformed points)
+    gaps = np.diff(coords[:, 0])  # Gaps in the x-coordinate
+    plt.figure(figsize=(8, 6))
+    plt.plot(gaps, marker='o', linestyle='-', color='green')
+    plt.title(f"Prime Gaps in {space_name} Space")
+    plt.xlabel("Index")
+    plt.ylabel("Gap Size")
+    plt.grid(True)
+    plt.show()
+
+    # Step 9: Analyze for Predictability in Gaps
+    mean_gap = np.mean(gaps)
+    std_gap = np.std(gaps)
+    print(f"{space_name} - Mean Gap Size: {mean_gap:.4f}")
+    print(f"{space_name} - Gap Size Std Dev: {std_gap:.4f}")
+
+    # Predict the next gap size (using a basic model like mean gap)
+    next_gap_prediction = mean_gap
+    print(f"Predicted next gap in {space_name} space: {next_gap_prediction:.4f}")
+
+# Additional modeling or advanced pattern recognition could follow.
