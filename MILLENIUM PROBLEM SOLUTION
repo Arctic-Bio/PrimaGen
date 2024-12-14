@@ -1,0 +1,73 @@
+// Function to calculate the LCM of two numbers
+function lcm(a, b) {
+    return (a * b) / gcd(a, b);
+}
+
+// Function to calculate the GCD (Greatest Common Divisor) of two numbers
+function gcd(a, b) {
+    if (b === 0) return a;
+    return gcd(b, a % b);
+}
+
+// Extended function for the Chinese Remainder Theorem (CRT)
+// Calculates the smallest number 'x' that satisfies the congruences
+// x ≡ 1 (mod p_i) for each known prime p_i
+function chineseRemainder(primes) {
+    // Step 1: Find the product of all the primes (LCM)
+    let product = primes.reduce((acc, prime) => acc * prime, 1);
+  
+    // Step 2: Apply the Chinese Remainder Theorem to find x
+    let x = 0;
+    primes.forEach(prime => {
+        let partialProduct = product / prime;  // Product of all primes except the current one
+        let inverse = modInverse(partialProduct, prime); // Find the modular inverse of (product / prime) modulo prime
+        x += partialProduct * inverse;  // Add the contribution for the current prime
+    });
+  
+    // Modulo the result to ensure it is non-negative
+    return (x % product + product) % product;  // Ensure result is positive and within range
+}
+
+// Function to compute modular inverse of a number 'a' modulo 'm' using Extended Euclidean Algorithm
+function modInverse(a, m) {
+    let [g, x, y] = extendedGCD(a, m);
+    if (g !== 1) throw new Error(`No modular inverse exists for ${a} modulo ${m}`);
+    return (x % m + m) % m; // Ensure the result is positive and within the valid range
+}
+
+// Extended Euclidean Algorithm to find GCD and coefficients
+function extendedGCD(a, b) {
+    if (a === 0) return [b, 0, 1];
+    let [g, x1, y1] = extendedGCD(b % a, a);
+    let x = y1 - Math.floor(b / a) * x1;
+    let y = x1;
+    return [g, x, y];
+}
+
+// Main function to generate the next prime based on known primes using CRT
+function generateNextPrime(primes) {
+    // Use the Chinese Remainder Theorem to find the smallest number 
+    // not divisible by any of the known primes, by solving x ≡ 1 mod p for all p.
+    let nextPrime = chineseRemainder(primes) + 1;
+    
+    // Ensure the result is still not divisible by the known primes
+    while (primes.some(p => nextPrime % p === 0)) {
+        nextPrime++;
+    }
+    
+    return nextPrime;
+}
+
+// Example usage: Generating primes with the first two primes (2, 3)
+let primes = [2, 3];
+let numberOfPrimes = 10;
+let primeSequence = primes.slice();
+
+for (let i = primes.length; i < numberOfPrimes; i++) {
+    let nextPrime = generateNextPrime(primeSequence);
+    primeSequence.push(nextPrime);
+}
+
+console.log("Generated Primes:", primeSequence);
+
+//the answer is that there is no basic system for generating primes, each prime is based on every one before it because it must not be factorable by anything before it, yet we dont have to worry about things after it, of we did, as I called them superfactors. litterely nothing would be prime, zip, primes are fully reliant on each other, now heuristically there is a chance if discovering some odd pattern from the forst couple of primes and the pattern ebtween how exactly they influence each other but I am too tired to look into it.
