@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Multidirectional Number Space</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+    #controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <button id="full-view">Full View</button>
+    <button id="primes-to-composites">Primes to Composites</button>
+    <button id="composites-only">Composites Only</button>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+  <script>
+    // Helper functions
+    function isPrime(num) {
+      if (num <= 1) return false;
+      for (let i = 2; i <= Math.sqrt(num); i++) {
+        if (num % i === 0) return false;
+      }
+      return true;
+    }
+
+    function generateFactorPairs(N, limit) {
+      const pairs = [];
+      for (let D = -limit; D <= limit; D++) {
+        if (D !== 0 && N % D === 0) {
+          const E = N / D;
+          pairs.push([D, E]);
+        }
+      }
+      return pairs;
+    }
+
+    // Setup scene
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const numbers = Array.from({ length: 100 }, (_, i) => i + 1); // Numbers 1 to 100
+    const limit = 100;
+
+    const nodePositions = new Map();
+    const edges = [];
+    const primesToCompositesEdges = [];
+    const compositeEdges = [];
+    const sphereRadius = 50;
+
+    // Add nodes
+    numbers.forEach((N, index) => {
+      const phi = Math.acos(1 - 2 * (index / numbers.length));
+      const theta = Math.PI * (1 + Math.sqrt(5)) * index;
+
+      const x = sphereRadius * Math.sin(phi) * Math.cos(theta);
+      const y = sphereRadius * Math.sin(phi) * Math.sin(theta);
+      const z = sphereRadius * Math.cos(phi);
+
+      const material = new THREE.MeshBasicMaterial({ color: isPrime(N) ? 0xff0000 : 0x4682b4 }); // Red for primes, blue for others
+      const geometry = new THREE.SphereGeometry(0.5, 12, 12);
+      const node = new THREE.Mesh(geometry, material);
+      node.position.set(x, y, z);
+
+      scene.add(node);
+      nodePositions.set(N, node.position);
+    });
+
+    // Add edges
+    numbers.forEach((N) => {
+      const factorPairs = generateFactorPairs(N, limit);
+      const start = nodePositions.get(N);
+
+      factorPairs.forEach(([D, E]) => {
+        const createEdge = (start, end, color, collection) => {
+          if (start && end) {
+            const material = new THREE.LineBasicMaterial({ color: color });
+            const points = [start, end];
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+            collection.push(line);
+          }
+        };
+
+        const endD = nodePositions.get(D);
+        const endE = nodePositions.get(E);
+
+        if (endD) {
+          const isPrimeToComposite = (isPrime(N) && !isPrime(D)) || (!isPrime(N) && isPrime(D));
+          const edgeColor =
+            isPrime(N) && !isPrime(D)
+              ? 0x800080 // Purple for prime-to-composite
+              : !isPrime(N) && !isPrime(D)
+              ? 0x808080 // Gray for composite-to-composite
+              : null;
+
+          if (edgeColor) createEdge(start, endD, edgeColor, edges);
+
+          // Categorize edges
+          if (isPrimeToComposite) primesToCompositesEdges.push(edges[edges.length - 1]);
+          if (!isPrime(N) && !isPrime(D)) compositeEdges.push(edges[edges.length - 1]);
+        }
+        if (endE) {
+          const isPrimeToComposite = (isPrime(N) && !isPrime(E)) || (!isPrime(N) && isPrime(E));
+          const edgeColor =
+            isPrime(N) && !isPrime(E)
+              ? 0x800080 // Purple for prime-to-composite
+              : !isPrime(N) && !isPrime(E)
+              ? 0x808080 // Gray for composite-to-composite
+              : null;
+
+          if (edgeColor) createEdge(start, endE, edgeColor, edges);
+
+          // Categorize edges
+          if (isPrimeToComposite) primesToCompositesEdges.push(edges[edges.length - 1]);
+          if (!isPrime(N) && !isPrime(E)) compositeEdges.push(edges[edges.length - 1]);
+        }
+      });
+
+      // Link primes to their "canceling" composites
+      if (isPrime(N)) {
+        for (let C = N + 1; C <= limit; C++) {
+          if (!isPrime(C) && C % N === 0) {
+            const end = nodePositions.get(C);
+            const material = new THREE.LineBasicMaterial({ color: 0xffff00 }); // Yellow for prime-to-cancelling composite
+            const geometry = new THREE.BufferGeometry().setFromPoints([start, end]);
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+            edges.push(line);
+            primesToCompositesEdges.push(line);
+          }
+        }
+      }
+    });
+
+    // Camera setup
+    camera.position.z = 150;
+
+    // Toggle views
+    function showFullView() {
+      edges.forEach(edge => edge.visible = true);
+    }
+    function showPrimesToComposites() {
+      edges.forEach(edge => edge.visible = false);
+      primesToCompositesEdges.forEach(edge => edge.visible = true);
+    }
+    function showCompositesOnly() {
+      edges.forEach(edge => edge.visible = false);
+      compositeEdges.forEach(edge => edge.visible = true);
+    }
+
+    // Event listeners
+    document.getElementById("full-view").addEventListener("click", showFullView);
+    document.getElementById("primes-to-composites").addEventListener("click", showPrimesToComposites);
+    document.getElementById("composites-only").addEventListener("click", showCompositesOnly);
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      scene.rotation.y += 0.002;
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Resize handler
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
