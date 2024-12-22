@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Number Graph Analysis</title>
+    <style>
+        #analysisPanel {
+            position: absolute;
+            top: 200px;
+            right: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            max-width: 350px;
+            overflow-y: scroll;
+            max-height: 500px;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Prime Number Graph Analysis</h1>
+<p>This tool visualizes the number line, analyzes relationships between primes and composites, and displays regularities.</p>
+
+<div>
+    <label for="inputCenter">Center: </label>
+    <input id="inputCenter" type="number" value="10">
+    <label for="inputRange">Range: </label>
+    <input id="inputRange" type="number" value="10">
+    <label for="layoutSelect">Layout: </label>
+    <select id="layoutSelect">
+        <option value="tree">Tree</option>
+        <option value="circle">Circle</option>
+    </select>
+    <label for="connectionsSelect">Connection Type: </label>
+    <select id="connectionsSelect">
+        <option value="single">Single connection</option>
+        <option value="multiple">Multiple connections</option>
+    </select>
+    <button id="generate">Generate Number Line</button>
+    <button id="clear">Clear Data</button>
+</div>
+
+<canvas id="canvas" width="800" height="600"></canvas>
+
+<div id="analysisPanel"></div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let nodes = [];
+    let edges = [];
+    let primeToPrimeRelations = [];
+    let primeToCompositeRelations = [];
+    let compositeToCompositeRelations = [];
+    let compositeToPrimeRelations = [];
+
+    // Function to determine if a number is prime
+    function isPrime(n) {
+        if (n <= 1) return false;
+        for (let i = 2; i <= Math.sqrt(n); i++) {
+            if (n % i === 0) return false;
+        }
+        return true;
+    }
+
+    // Function to generate the number tree
+    function generateTree(center, range, layout) {
+        // Clear previous data
+        nodes = [];
+        edges = [];
+        primeToPrimeRelations = [];
+        compositeToCompositeRelations = [];
+        primeToCompositeRelations = [];
+        compositeToPrimeRelations = [];
+
+        // Generate the numbers in the range
+        const numbers = [];
+        for (let i = center - range; i <= center + range; i++) {
+            numbers.push(i);
+        }
+
+        // Add nodes to the canvas and create edges based on connections
+        numbers.forEach(num => {
+            const isPrimeNum = isPrime(num);
+            const node = {
+                number: num,
+                x: Math.random() * (canvas.width - 100) + 50, // Random X position
+                y: Math.random() * (canvas.height - 100) + 50, // Random Y position
+                isPrime: isPrimeNum
+            };
+
+            nodes.push(node);
+
+            // Create edges if numbers are connected
+            nodes.forEach(otherNode => {
+                if (num !== otherNode.number) {
+                    const isConnectionValid = (isPrime(num) && isPrime(otherNode.number)) ||
+                                              (isPrime(num) && !isPrime(otherNode.number)) ||
+                                              (!isPrime(num) && !isPrime(otherNode.number));
+
+                    if (isConnectionValid) {
+                        edges.push({
+                            from: node,
+                            to: otherNode
+                        });
+
+                        // Track connections
+                        if (isPrime(num) && isPrime(otherNode.number)) {
+                            primeToPrimeRelations.push({from: num, to: otherNode.number});
+                        }
+                        if (isPrime(num) && !isPrime(otherNode.number)) {
+                            primeToCompositeRelations.push({from: num, to: otherNode.number});
+                        }
+                        if (!isPrime(num) && !isPrime(otherNode.number)) {
+                            compositeToCompositeRelations.push({from: num, to: otherNode.number});
+                        }
+                        if (!isPrime(num) && isPrime(otherNode.number)) {
+                            compositeToPrimeRelations.push({from: num, to: otherNode.number});
+                        }
+                    }
+                }
+            });
+        });
+
+        // Draw the nodes and edges on the canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        edges.forEach(edge => {
+            ctx.beginPath();
+            ctx.moveTo(edge.from.x, edge.from.y);
+            ctx.lineTo(edge.to.x, edge.to.y);
+            ctx.strokeStyle = '#888';
+            ctx.stroke();
+        });
+
+        nodes.forEach(node => {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 10, 0, Math.PI * 2, false);
+            ctx.fillStyle = node.isPrime ? 'green' : 'red';
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = 'black';
+            ctx.fillText(node.number, node.x - 8, node.y - 12);
+        });
+
+        // Perform regularity analysis
+        analyzeRegularities();
+    }
+
+    // Function to analyze regularities in relationships
+    function analyzeRegularities() {
+        let primeToPrimeCount = 0;
+        let primeToCompositeCount = 0;
+        let compositeToCompositeCount = 0;
+
+        let primeNumbers = [];
+        let compositeNumbers = [];
+
+        // Traverse the edges and categorize them
+        edges.forEach(edge => {
+            const fromIsPrime = isPrime(edge.from.number);
+            const toIsPrime = isPrime(edge.to.number);
+
+            if (fromIsPrime && toIsPrime) {
+                primeToPrimeCount++;
+            } else if (fromIsPrime && !toIsPrime) {
+                primeToCompositeCount++;
+            } else if (!fromIsPrime && !toIsPrime) {
+                compositeToCompositeCount++;
+            }
+
+            // Store prime and composite numbers
+            if (fromIsPrime) {
+                primeNumbers.push(edge.from.number);
+            } else {
+                compositeNumbers.push(edge.from.number);
+            }
+
+            if (toIsPrime) {
+                primeNumbers.push(edge.to.number);
+            } else {
+                compositeNumbers.push(edge.to.number);
+            }
+        });
+
+        // Remove duplicates
+        primeNumbers = Array.from(new Set(primeNumbers));
+        compositeNumbers = Array.from(new Set(compositeNumbers));
+
+        // Update the analysis panel with results
+        updateAnalysisPanel(primeToPrimeCount, primeToCompositeCount, compositeToCompositeCount, primeNumbers, compositeNumbers);
+    }
+
+    // Function to update the analysis panel with results
+    function updateAnalysisPanel(primeToPrimeCount, primeToCompositeCount, compositeToCompositeCount, primeNumbers, compositeNumbers) {
+        const analysisPanel = document.getElementById('analysisPanel');
+        analysisPanel.innerHTML = `
+            <h3>Analysis of Relationships</h3>
+            <p>Prime-to-Prime connections: ${primeToPrimeCount}</p>
+            <p>Prime-to-Composite connections: ${primeToCompositeCount}</p>
+            <p>Composite-to-Composite connections: ${compositeToCompositeCount}</p>
+            <br>
+            <h4>Involved Numbers:</h4>
+            <p><strong>Primes:</strong> ${primeNumbers.join(', ')}</p>
+            <p><strong>Composites:</strong> ${compositeNumbers.join(', ')}</p>
+        `;
+    }
+
+    // Event listener to trigger graph creation
+    document.getElementById('generate').addEventListener('click', () => {
+        const center = parseInt(document.getElementById('inputCenter').value);
+        const range = parseInt(document.getElementById('inputRange').value);
+        const layout = document.getElementById('layoutSelect').value;
+        const connectionType = document.getElementById('connectionsSelect').value;
+
+        // Generate a new number tree and reset data
+        generateTree(center, range, layout);
+    });
+
+    // Event listener to clear data and graph
+    document.getElementById('clear').addEventListener('click', () => {
+        nodes = [];
+        edges = [];
+        primeToPrimeRelations = [];
+        compositeToCompositeRelations = [];
+        primeToCompositeRelations = [];
+        compositeToPrimeRelations = [];
+
+        // Clear the canvas and analysis panel
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updateAnalysisPanel(0, 0, 0, [], []);
+    });
+
+</script>
+
+</body>
+</html>
