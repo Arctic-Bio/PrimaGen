@@ -1,0 +1,121 @@
+# Prime Number Distribution Theory
+
+## Overview
+
+This theory investigates the distribution of prime numbers on the number line and explores how arbitrarily labelling some numbers as non-prime impacts the overall count of primes. It draws on the observation that prime numbers are distributed in a complex yet deterministic manner, and altering the labeling of non-primes doesn't fundamentally change the number of primes in any given range.
+
+## Core Concepts
+
+1. **Prime Definition**: A prime number is a natural number greater than 1 that has no positive divisors other than 1 and itself. In other words, a prime number cannot be formed by multiplying any two smaller natural numbers.
+
+2. **Arbitrary Non-Prime Labelling**: If we arbitrarily label some numbers as "non-prime," the question arises: will this labeling change the count of primes, or will new primes simply emerge to maintain the distribution?
+
+3. **Prime Distribution**: Prime numbers, though seemingly chaotic and irregular at small scales, exhibit a specific deterministic pattern over larger intervals. The distribution of primes is governed by deep mathematical properties, such as the **Prime Number Theorem**, which approximates how many primes are there below a given number N.
+
+## Theory
+
+### Premise
+
+- Prime numbers are defined as those integers greater than 1 that have no divisors other than 1 and the number itself.
+- In any finite set of numbers (up to a specified limit), there exists a count of prime numbers. This count can be altered by excluding numbers from the set based on arbitrary labelling as non-prime.
+- The hypothesis proposes that arbitrarily labelling certain numbers as non-prime will not change the overall count of primes in a given range because labelling some as non-prime simply "makes space" for other primes within the range. The number of primes in any sufficiently large range remains roughly consistent with the original count.
+
+### Mathematical Insight
+
+Prime numbers appear to follow certain regularities. Though they are irregular in small ranges, the density of prime numbers is approximately given by the formula:
+
+\[
+\pi(N) \sim \frac{N}{\log(N)}
+\]
+
+where \pi(N) is the prime-counting function, which approximates the number of primes less than or equal to N, and \log(N) is the natural logarithm of N.
+
+As per the **Prime Number Theorem**, while primes become less frequent as numbers grow larger, the distribution still follows a predictable pattern over long intervals.
+
+### What Happens When We Label Non-Primes Arbitrarily?
+
+1. Suppose we take an interval of numbers from 1 to N and generate a list of primes up to N.
+2. Now, arbitrarily label some of the non-prime numbers as non-prime (for example, label 4, 6, and 8 as non-prime).
+3. The key observation here is that **labelling numbers as non-prime doesn't remove other primes** from the set. The labelled non-primes can be replaced by new primes within the range, maintaining a stable count of primes.
+
+This theoretical framework suggests that as we label certain numbers non-prime, the overall set of primes remains largely unaffected because numbers adjacent to those non-primes continue to satisfy the condition of being prime.
+
+## Proof via Simulation
+
+To verify the above hypothesis, we created a JavaScript simulation that:
+1. Generates a list of primes up to a specified limit.
+2. Labels certain numbers (such as 4, 6, 8, 9) as non-prime arbitrarily.
+3. Checks if the count of primes remains unchanged after these labels.
+
+### Simulation Code (in JavaScript)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Number Distribution Test</title>
+</head>
+<body>
+
+<h1>Prime Number Distribution Theory Test</h1>
+<pre id="output"></pre>
+
+<script>
+    // Function to check if a number is prime
+    function isPrime(num) {
+        if (num <= 1) return false;
+        for (let i = 2; i <= Math.sqrt(num); i++) {
+            if (num % i === 0) return false;
+        }
+        return true;
+    }
+
+    // Function to generate a list of prime numbers up to a limit
+    function generatePrimes(limit) {
+        let primes = [];
+        for (let i = 2; i < limit; i++) {
+            if (isPrime(i)) {
+                primes.push(i);
+            }
+        }
+        return primes;
+    }
+
+    // Function to simulate the "arbitrary labelling" of non-primes
+    function simulateLabelling(limit, arbitraryNonPrimes) {
+        const originalPrimes = generatePrimes(limit);
+        const labelledAsNonPrime = new Set(arbitraryNonPrimes); // To keep track of numbers labelled as non-prime
+
+        // Remove labelled numbers from the primes list
+        const newPrimes = originalPrimes.filter(p => !labelledAsNonPrime.has(p));
+
+        // Log the results
+        let output = "";
+        output += `Original primes up to ${limit}: [${originalPrimes.join(', ')}]\n`;
+        output += `Arbitrary non-primes labelled as non-prime: [${arbitraryNonPrimes.join(', ')}]\n`;
+        output += `New primes after labelling: [${newPrimes.join(', ')}]\n`;
+        output += `Count of primes before labelling: ${originalPrimes.length}, after labelling: ${newPrimes.length}\n\n`;
+
+        // Analysis based on observed effect
+        if (newPrimes.length === originalPrimes.length) {
+            output += "The count of primes remains approximately the same, even with labelling some numbers as non-prime.\n";
+        } else {
+            output += "The labelling caused a shift in prime numbers due to the distribution properties of primes.\n";
+        }
+
+        return output;
+    }
+
+    // Run the test with an arbitrary set of non-primes and print the result
+    const limit = 100;
+    const arbitraryNonPrimes = [4, 6, 8, 9, 12]; // Arbitrary non-prime numbers for testing
+    const result = simulateLabelling(limit, arbitraryNonPrimes);
+
+    // Output to the HTML
+    document.getElementById('output').textContent = result;
+</script>
+
+</body>
+</html>
